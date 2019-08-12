@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+	<data>
+
+		<record id="project_visual_inspection_view" model="ir.ui.view">
+			<field name="name">project.visual.inspection.tree</field>
+			<field name="model">project.visual.inspection</field>
+			<field name="arch" type="xml">
+				<tree string="Visual Inspection">
+					<field name="date"></field>
+					<field name="description"></field>
+					<field name="actual_accomplishment"></field>
+				</tree>
+			</field>
+		</record>
+
+		<record id="project_visual_inspection_form" model="ir.ui.view">
+			<field name="name">project.visual.inspection.form</field>
+			<field name="model">project.visual.inspection</field>
+			<field name="arch" type="xml">
+				<form string="Visual Inspection">
+					<group>
+						<field name="date"></field>
+						<field name="description"></field>
+						<field name="actual_accomplishment"></field>
+					</group>
+				</form>
+			</field>
+		</record>
+
+		<record id="view_task_form_inherited" model="ir.ui.view">
+			<field name="name">project.task.form</field>
+			<field name="model">project.task</field>
+			<field name="inherit_id" ref="project.view_task_form2" />
+			<field name="arch" type="xml">
+				<field name="tag_ids" position="after">
+					<field name="actual_accomplishment" widget="progressbar" />
+				</field>
+				<field name="description" position="after">
+					<group name="visual_inspection" string="Visual Inspection">
+						<field name="visual_inspection" nolabel="1" widget="one2many_list"
+							mode="tree,kanban">
+							<tree string="Visual Inspection">
+								<field name="date"></field>
+								<field name="description"></field>
+								<field name="actual_accomplishment"></field>
+							</tree>
+						</field>
+					</group>
+				</field>
+			</field>
+		</record>
+	</data>
+</odoo>
+	
