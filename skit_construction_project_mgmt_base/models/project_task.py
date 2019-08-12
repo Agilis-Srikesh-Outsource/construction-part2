@@ -32,7 +32,8 @@ class ProjectMaterialConsumption(models.Model):
     tot_stock_received = fields.Float(string='Total Stock Received')
     uom = fields.Many2one('product.uom', string="Unit of Measure")
     used_qty = fields.Float(string='Used Quantity', readonly=True)
-    available_stock = fields.Float(string='Available Stock', readonly=True)
+    available_stock = fields.Float(string='Available Stock',
+                                   compute='_compute_tot_stock', readonly=True)
     consumption_progress = fields.Float(string="Consumption Progress")
     wastage_percent = fields.Float(string="Wastage Percentage")
     scrap_percent = fields.Float(string="Scrap Percentage")

@@ -16,7 +16,9 @@ class SkitProjectBOQ(models.Model):
     phase_id = fields.Many2one('project.phase', string="Phase",
                                domain="[('project_id', '=', project_id)]")
     task_id = fields.Many2one('project.task', string="Task",
-                              domain="[('project_id', '=', project_id),('phase_id', '=', phase_id)]")
+                              domain=lambda self: [("id", "not in", self.env['project.boq'].search([]).mapped("task_id").ids),
+                                                   ("project_id", "in", self.env['project.boq'].search([]).mapped("project_id").ids),
+                                                   ("phase_id", "in", self.env['project.boq'].search([]).mapped("phase_id").ids)])
     allocated_budget = fields.Integer(string="Allocated Budget", readonly=True)
     qty = fields.Float(string="Quantity", readonly=True,
                        digits=dp.get_precision('Product Price'))
