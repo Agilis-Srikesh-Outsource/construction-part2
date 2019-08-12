@@ -9,7 +9,7 @@
 				<button name="%(project.act_project_project_2_project_task_all)d"
 					position="after">
 					<button class="oe_stat_button" type="action"
-						name="%(open_view_project_boq)d" icon="fa-tasks"
+						name="%(open_view_project_boq_link)d" icon="fa-tasks"
 						context="{'default_project_id': active_id, 'default_user_id': user_id}">
 						<field string="BOQ" name="boq_count" widget="statinfo"></field>
 					</button>

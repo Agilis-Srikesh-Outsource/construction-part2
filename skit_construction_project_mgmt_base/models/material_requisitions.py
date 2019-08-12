@@ -79,7 +79,25 @@ class SkitMaterialReq(models.Model):
             total_qty =  consumption.tot_stock_received+ delivery_qty+mr_bom_material.mr_qty   
             if total_qty > consumption.estimated_qty:
                 mr_bom_material.update({'exceeded_qty':True})
-            delivery_qty = 0   
+            delivery_qty = 0
+        stock_picking = self.env['stock.picking']
+        stock_move = self.env['stock.move']
+        picking = stock_picking.create({'picking_type_id':self.operation_id.id,
+                                        'location_id':self.operation_id.default_location_src_id.id,
+                                        'location_dest_id': self.task_id.stock_location_id.id if self.task_id.stock_location_id 
+                                                                                else self.operation_id.default_location_dest_id.id,
+                                        'mr_bom_id':self.id
+                                        })
+        for mr_material in self.mr_material_ids:
+            move = stock_move.create({'name': _('New Move:') + mr_material.product_id.display_name,
+                                      'product_id':mr_material.product_id.id,
+                                      'product_uom_qty':mr_material.mr_qty,
+                                      'product_uom':mr_material.product_id.uom_id.id,
+                                      'picking_id':picking.id,
+                                      'location_id':picking.location_id.id,
+                                      'location_dest_id':picking.location_dest_id.id,
+                                     })
+           
         self.approved_by = user.name
         self.approved_date = datetime.today()
         self.write({'state': 'approved'})

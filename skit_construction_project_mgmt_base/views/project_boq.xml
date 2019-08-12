@@ -213,17 +213,24 @@
     	</record>
     	
 		<!-- -Bill of Material Action-->
-		<record id="open_view_project_boq" model="ir.actions.act_window">
+		<record id="open_view_project_base_boq" model="ir.actions.act_window">
 	        <field name="name">Bill of Material</field>
 	        <field name="res_model">project.boq</field>
 	        <field name="view_type">form</field>
 	        <field name="view_mode">tree,form</field>
-	        <field name="domain">[('project_id','=', active_id)]</field>
-        	<field name="context">{'default_project_id': active_id}</field>
     	</record>
     	
+    	<record id="open_view_project_boq_link" model="ir.actions.act_window">
+	        <field name="name">BOQ</field>
+	        <field name="res_model">project.boq</field>
+	        <field name="view_type">form</field>
+	        <field name="view_mode">tree,form</field>
+	        <field name="domain">[('project_id','=', active_id)]</field>
+    	</record>
+    	
+    	
   		<!--Bill of Material Menu Item-->
-    	<menuitem id="menu_projects_project_boq" action="open_view_project_boq" 
+    	<menuitem id="menu_projects_project_boq" action="open_view_project_base_boq" 
     		name="Bill of Material" parent="project.menu_projects" sequence="4"/>
     		
     		<!-- BOQ Overhead Category Menu Item-->

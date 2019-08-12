@@ -6,10 +6,10 @@
     'license': 'AGPL-3',
     'version': '11.0.0',
     'category': 'Project',
-    'name': "Construction Project Management",
-    'summary': 'Construction Project Management Base module',
+    'name': "SKIT Construction Project Management",
+    'summary': 'SKIT Construction Project Management Base module',
     'description': '''
-        Construction Project Management''',
+        SKIT Construction Project Management''',
     'data': [
         'views/project_boq.xml',
         'views/project.xml',
