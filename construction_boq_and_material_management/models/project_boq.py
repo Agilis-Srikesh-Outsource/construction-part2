@@ -10,15 +10,20 @@ class SkitProjectBOQ(models.Model):
     _name = 'project.boq'
     _description = 'Bill Of Quantity'
 
+    @api.onchange('phase_id')
+    def _onchange_phase_id(self):
+        tasks = self.env['project.task'].search([('id', 'not in', self.env['project.boq'].search([]).mapped("task_id").ids)
+                                                 ])
+        if self.phase_id:
+            return {'domain': {'task_id': [('project_id', '=', self.project_id.id), ('phase_id', '=', self.phase_id.id ), ('id', 'in', tasks.ids)]
+                               }}
+
     name = fields.Char(string='Reference Number', index=True, readonly=True,
                        copy=False, default=lambda self: _('New'))
     project_id = fields.Many2one('project.project', string="Project")
     phase_id = fields.Many2one('project.phase', string="Phase",
                                domain="[('project_id', '=', project_id)]")
-    task_id = fields.Many2one('project.task', string="Task",
-                              domain=lambda self: [("id", "not in", self.env['project.boq'].search([]).mapped("task_id").ids),
-                                                   ("project_id", "in", self.env['project.boq'].search([]).mapped("project_id").ids),
-                                                   ("phase_id", "in", self.env['project.boq'].search([]).mapped("phase_id").ids)])
+    task_id = fields.Many2one('project.task', string="Task")
     allocated_budget = fields.Integer(string="Allocated Budget", readonly=True)
     qty = fields.Float(string="Quantity", readonly=True,
                        digits=dp.get_precision('Product Price'))
