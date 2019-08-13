@@ -43,18 +43,67 @@ class Project(models.Model):
     projection_set = fields.Boolean()
     # Budget And Actual Expeditures
     #Todo: Make all this field a "Computed fields" Badget: based on the BOQs; Expense: Based on the actual expense recored in the Analytic Account
-    material_budget = fields.Float(string="Material Budget")
+    material_budget = fields.Float(string="Material Budget", store=True, compute="_get_budget_summary")
     material_expense = fields.Float(string="Material Expense")
-    service_budget = fields.Float(string="Service Budget")
+    service_budget= fields.Float(string="Service Budget", store=True, compute="_get_budget_summary")
     service_expense = fields.Float(string="Service Expense")
-    labor_budget = fields.Float(string="Labor Budget")
+    labor_budget = fields.Float(string="Labor Budget", store=True, compute="_get_budget_summary")
     labor_expense = fields.Float(string="Labor Expense")
-    equipment_budget = fields.Float(string="Equipment Budget")
+    equipment_budget = fields.Float(string="Equipment Budget", store=True, compute="_get_budget_summary")
     equipment_expense = fields.Float(string="Equipment Expense")
-    overhead_budget = fields.Float(string="Overhead Budget")
+    overhead_budget = fields.Float(string="Overhead Budget", store=True, compute="_get_budget_summary")
     overhead_expense = fields.Float(string="Overhead Expense")
-    total_budget = fields.Float(string="Total Budget")
+    total_budget = fields.Float(string="Total Budget", store=True, compute="_get_budget_summary")
     total_expense = fields.Float(string="Total Expense")
+
+    #Porfolio
+    parent_id = fields.Many2one("project.project", string="Portfolio", domain="[('project_type', 'in', ['porfolio'])]")
+    project_count = fields.Integer(string="Projects", compute="_compute_project_count")
+
+    @api.onchange('parent_id', 'name')
+    def _onchange_portfolio(self):
+        # data = self.search([('project_type', 'in', ['porfolio'])])
+        # raise ValidationError(_('Data: %s'%(str(data))))
+        for i in self:
+            if i.parent_id:
+                i.user_id = i.parent_id.user_id.id
+                i.partner_id = i.parent_id.partner_id.id
+
+    def _compute_project_count(self):
+        for record in self:
+            record.project_count = self.env['project.project'].search_count([('project_type','=','project'),('parent_id','=',record.id)])
+
+    @api.model
+    def create(self, vals):
+        res = super(Project, self).create(vals)
+        if not res.project_type in ['portfolio', False]:
+            res.analytic_account_id.write({'parent_id':res.parent_id and res.parent_id.analytic_account_id.id or False})
+        return res
+
+    @api.multi
+    def write(self, vals):
+        res = super(Project, self).write(vals)
+        self.analytic_account_id.write({'parent_id': self.parent_id and self.parent_id.analytic_account_id.id or False})
+        return res
+
+
+    @api.depends('task_ids', 'task_ids.material_budget', 'task_ids.service_budget', 'task_ids.overhead_budget', 'task_ids.equipment_budget', 'task_ids.labor_budget')
+    def _get_budget_summary(self):
+        for i in self:
+            material = service = labor = equipment = overhead = 0.0
+            for task in i.task_ids:
+                material += task.material_budget
+                service += task.service_budget
+                labor += task.labor_budget
+                equipment += task.equipment_budget
+                overhead += task.overhead_budget
+            i.material_budget = material
+            i.service_budget = service
+            i.labor_budget = labor
+            i.equipment_budget = equipment
+            i.overhead_budget = overhead
+            i.total_budget = sum([material, service, labor, equipment, overhead])
+
 
     @api.multi
     def view_phases(self):
