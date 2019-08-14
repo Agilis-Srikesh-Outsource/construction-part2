@@ -50,9 +50,9 @@
 					<group>
 						<field name="product_id"></field>
 						<field name="quantity"></field>
-						<field name="uom"></field>
+						<field name="uom_id"></field>
 						<field name="scrap_percent"></field>
-						<field name="scrap_location"></field>
+						<field name="scrap_location_id"></field>
 						<field name="description"></field>
 					</group>
 					<footer>

@@ -9,7 +9,7 @@
 					<field name="product_id"></field>
 					<field name="estimated_qty"></field>
 					<field name="tot_stock_received"></field>
-					<field name="uom"></field>
+					<field name="uom_id"></field>
 					<field name="available_stock"></field>
 					<field name="consumption_progress" widget="progressbar"></field>
 					<field name="wastage_percent" widget="progressbar"></field>
@@ -27,7 +27,7 @@
 						<field name="product_id"></field>
 						<field name="estimated_qty"></field>
 						<field name="tot_stock_received"></field>
-						<field name="uom"></field>
+						<field name="uom_id"></field>
 						<field name="used_qty"></field>
 						<field name="available_stock"></field>
 						<field name="consumption_progress" widget="progressbar"></field>
@@ -44,7 +44,7 @@
 			<field name="arch" type="xml">
 				<tree string="Waste Management">
 					<field name="product_id"></field>
-					<field name="uom"></field>
+					<field name="uom_id"></field>
 					<field name="qty"></field>
 					<field name="wastage_percent"></field>
 					<field name="date_recorded"></field>
@@ -59,7 +59,7 @@
 				<form string="Material Consumption">
 					<group>
 						<field name="product_id"></field>
-					<field name="uom"></field>
+					<field name="uom_id"></field>
 					<field name="qty"></field>
 					<field name="wastage_percent"></field>
 					<field name="date_recorded"></field>
@@ -74,7 +74,7 @@
 			<field name="arch" type="xml">
 				<tree string="Scrap Products">
 					<field name="product_id"></field>
-					<field name="uom"></field>
+					<field name="uom_id"></field>
 					<field name="qty"></field>
 					<field name="scrap_percent"></field>
 					<field name="scrap_reason"></field>
@@ -90,7 +90,7 @@
 				<form string="Scrap Products">
 					<group>
 						<field name="product_id"></field>
-						<field name="uom"></field>
+						<field name="uom_id"></field>
 						<field name="qty"></field>
 						<field name="scrap_percent"></field>
 						<field name="scrap_reason"></field>

@@ -30,7 +30,7 @@ class ProjectMaterialConsumption(models.Model):
     product_id = fields.Many2one('product.product', string="Product")
     estimated_qty = fields.Float(string='Estimated Quantity')
     tot_stock_received = fields.Float(string='Total Stock Received')
-    uom = fields.Many2one('product.uom', string="Unit of Measure")
+    uom_id = fields.Many2one('product.uom', string="Unit of Measure")
     used_qty = fields.Float(string='Used Quantity', readonly=True)
     available_stock = fields.Float(string='Available Stock',
                                    compute='_compute_tot_stock', readonly=True)
@@ -56,7 +56,8 @@ class ProjectMaterialConsumption(models.Model):
                     waste_qty += waste.qty
                 for scraps in scrap_product:
                     scrap += scraps.qty
-                material.available_stock = material.tot_stock_received - (material.used_qty + waste_qty + scrap)
+                avail_stock = material.tot_stock_received - (material.used_qty + waste_qty + scrap)
+                material.update({'available_stock': avail_stock})
 
     @api.multi
     def action_used_qty(self):
@@ -91,7 +92,7 @@ class ProjectMaterialConsumption(models.Model):
                     'default_product_id': self.product_id.id,
                     'default_material_id': self.id,
                     'task_id': self.task_id.id,
-                    'uom': self.uom.id,
+                    'uom_id': self.uom_id.id,
                 }
             }
 
@@ -108,7 +109,7 @@ class ProjectMaterialConsumption(models.Model):
                 'context': {
                     'default_product_id': self.product_id.id,
                     'default_material_id': self.id,
-                    'default_uom': self.uom.id,
+                    'default_uom_id': self.uom_id.id,
                     'task_id': self.task_id.id,
                 }
             }
@@ -119,7 +120,7 @@ class ProjectWasteManagement(models.Model):
     _description = "Waste Management"
 
     product_id = fields.Many2one('product.product', string="Product")
-    uom = fields.Many2one('product.uom', string="Unit of Measure")
+    uom_id = fields.Many2one('product.uom', string="Unit of Measure")
     qty = fields.Float(string='Quantity')
     wastage_percent = fields.Float(string='Wastage Percentage')
     date_recorded = fields.Date(string='Date Recorded')
@@ -131,7 +132,7 @@ class ProjectScrapProducts(models.Model):
     _description = "Scrap Products"
 
     product_id = fields.Many2one('product.product', string="Product")
-    uom = fields.Many2one('product.uom', string="Unit of Measure")
+    uom_id = fields.Many2one('product.uom', string="Unit of Measure")
     qty = fields.Float(string='Quantity')
     scrap_percent = fields.Float(string='Scrap Percentage')
     scrap_reason = fields.Text(string='Scrap Reason')

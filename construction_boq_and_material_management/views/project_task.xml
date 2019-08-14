@@ -36,7 +36,7 @@
 								<field name="product_id"></field>
 								<field name="estimated_qty"></field>
 								<field name="tot_stock_received"></field>
-								<field name="uom"></field>
+								<field name="uom_id"></field>
 								<field name="used_qty"></field>
 								<button name="action_used_qty" string="Used Qty" type="object"
 									icon="fa-sign-in text-success" attrs="{'invisible': [('available_stock', '&lt;=', 0)]}" />
@@ -55,7 +55,7 @@
 						<field name="waste_management" nolabel="1" widget="one2many_list">
 							<tree string="Waste Management">
 								<field name="product_id"></field>
-								<field name="uom"></field>
+								<field name="uom_id"></field>
 								<field name="qty"></field>
 								<field name="wastage_percent"></field>
 								<field name="date_recorded"></field>
@@ -66,7 +66,7 @@
 						<field name="scrap_products" nolabel="1" widget="one2many_list">
 							<tree string="Scrap Products">
 								<field name="product_id"></field>
-								<field name="uom"></field>
+								<field name="uom_id"></field>
 								<field name="qty"></field>
 								<field name="scrap_percent"></field>
 								<field name="scrap_reason"></field>

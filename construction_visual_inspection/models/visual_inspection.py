@@ -30,6 +30,7 @@ class ProjectTask(models.Model):
 
     @api.depends('visual_inspection.actual_accomplishment')
     def update_actual_accomplishment(self):
-        self.actual_accomplishment = 0
+        actual_accomplishment = 0
         for visual in self.visual_inspection:
-            self.actual_accomplishment += visual.actual_accomplishment
+            actual_accomplishment += visual.actual_accomplishment
+            self.update({'actual_accomplishment': actual_accomplishment})

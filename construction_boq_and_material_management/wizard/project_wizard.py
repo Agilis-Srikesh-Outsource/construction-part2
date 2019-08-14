@@ -92,7 +92,7 @@ class ProjectWasteProcess(models.Model):
 
     @api.multi
     def update_waste_process(self):
-        uom = self.env.context['uom']
+        uom = self.env.context['uom_id']
         waste_management = self.env['project.waste.management']
         waste_manage = self.env['project.waste.management'].search([
             ('task_id', '=', self.material_id.task_id.id)])
@@ -102,20 +102,20 @@ class ProjectWasteProcess(models.Model):
                                      'qty': self.quantity,
                                      'task_id': self.material_id.task_id.id,
                                      'date_recorded': fields.Date.today(),
-                                     'uom': uom
+                                     'uom_id': uom
                                      })
             else:
                 waste_management.create({'product_id': self.product_id.id,
                                          'qty': self.quantity,
                                         'task_id': self.material_id.task_id.id,
                                          'date_recorded': fields.Date.today(),
-                                         'uom': uom})
+                                         'uom_id': uom})
         else:
             waste_management.create({'product_id': self.product_id.id,
                                      'qty': self.quantity,
                                      'task_id': self.material_id.task_id.id,
                                      'date_recorded': fields.Date.today(),
-                                     'uom': uom})
+                                     'uom_id': uom})
         self.material_id.write({'wastage_percent': self.quantity,
                                 })
 
@@ -127,12 +127,12 @@ class ProjectScrapMove(models.Model):
     product_id = fields.Many2one('product.product', string="Product",
                                  readonly=True)
     quantity = fields.Float(string='Quantity of Scrap Material')
-    uom = fields.Many2one('product.uom', string="Unit of Measure",
-                          readonly=True)
+    uom_id = fields.Many2one('product.uom', string="Unit of Measure",
+                             readonly=True)
     scrap_percent = fields.Float(string='Scrap Percentage', readonly=True)
-    scrap_location = fields.Many2one('stock.location',
-                                     string="Scrap Location",
-                                     required=True)
+    scrap_location_id = fields.Many2one('stock.location',
+                                        string="Scrap Location",
+                                        required=True)
     description = fields.Text(string='Description',
                               required=True)
     material_id = fields.Many2one('project.material.consumption',
@@ -147,7 +147,7 @@ class ProjectScrapMove(models.Model):
             if self.material_id.product_id.id == self.product_id.id:
                 scraps.update({
                             'product_id': self.product_id.id,
-                            'uom': self.uom.id,
+                            'uom_id': self.uom_id.id,
                             'qty': self.quantity,
                             'date_recorded': fields.Date.today(),
                             'scrap_reason': self.description,
@@ -155,7 +155,7 @@ class ProjectScrapMove(models.Model):
                     })
             else:
                 scrap_move.create({'product_id': self.product_id.id,
-                                   'uom': self.uom.id,
+                                   'uom_id': self.uom_id.id,
                                    'qty': self.quantity,
                                    'date_recorded': fields.Date.today(),
                                    'scrap_reason': self.description,
@@ -163,7 +163,7 @@ class ProjectScrapMove(models.Model):
                                    })
         else:
             scrap_move.create({'product_id': self.product_id.id,
-                               'uom': self.uom.id,
+                               'uom_id': self.uom_id.id,
                                'qty': self.quantity,
                                'date_recorded': fields.Date.today(),
                                'scrap_reason': self.description,
