@@ -44,10 +44,28 @@
 								<field name="date"></field>
 								<field name="description"></field>
 								<field name="actual_accomplishment"></field>
+								<button name="document_attach" string="Attachments" type="object"
+									icon="fa fa-paperclip"/>
 							</tree>
 						</field>
 					</group>
 				</field>
+			</field>
+		</record>
+		
+		<!-- Created a new attachment form view to upload files under visual inspection -->
+		<record id="skit_attach_documents" model="ir.ui.view" >
+			<field name="name">attach.documents.form</field>
+			<field name="model">project.document.attach</field>
+			<field name="arch" type="xml">
+				<form create="false" string="Templates">
+					<field name="attachment_ids" widget="many2many_binary" />
+					<footer>
+						<button name="upload" class="btn-primary" type="object"
+							string="Save" default_focus="1" />
+						<button string="Cancel" class="btn-default" special="cancel" />
+					</footer>
+				</form>
 			</field>
 		</record>
 	</data>

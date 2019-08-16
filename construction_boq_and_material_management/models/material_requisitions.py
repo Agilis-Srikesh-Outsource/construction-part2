@@ -148,7 +148,7 @@ class SkitMaterialReq(models.Model):
             if not mr_bom_material:
                 val = mr_material.create({'product_id': consumption.product_id.id,
                                 'mr_qty': (consumption.estimated_qty-(consumption.tot_stock_received+delivery_qty)),
-                                'uom_id': consumption.uom.id,
+                                'uom_id': consumption.uom_id.id,
                                 'mr_id': self.id,
                                 'material_consumption_id': consumption.id})
             delivery_qty = 0

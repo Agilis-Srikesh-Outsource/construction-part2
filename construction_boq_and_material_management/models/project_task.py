@@ -18,7 +18,7 @@ class ProjectTask(models.Model):
     scrap_products = fields.One2many(
         'project.scrap.products', 'task_id', 'Scrap Products',
         copy=True, readonly=True)
-    boq_id = fields.Many2one('project.boq', 'BOQ Reference')
+    boq_id = fields.Many2one('project.boq', 'BOM/BOQ Reference')
     phase_id = fields.Many2one('project.phase', string="Project Phase",
                                domain="[('project_id', '=', project_id)]")
 
@@ -58,6 +58,9 @@ class ProjectMaterialConsumption(models.Model):
                     scrap += scraps.qty
                 avail_stock = material.tot_stock_received - (material.used_qty + waste_qty + scrap)
                 material.update({'available_stock': avail_stock})
+            else:
+                if material.tot_stock_received:
+                    material.update({'available_stock': material.tot_stock_received})
 
     @api.multi
     def action_used_qty(self):

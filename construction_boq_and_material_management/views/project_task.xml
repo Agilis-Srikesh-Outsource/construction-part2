@@ -29,6 +29,9 @@
 							attrs="{'required': [('qty', '!=', 0)]}" />
 					</div>
 				</field>
+				<field name="task_budget" position="after">
+					<field name="boq_id"/>
+				</field>
 				<page name="material_status" position="inside">
 					<group name="material_consumption" string="Material Consumption">
 						<field name="material_consumption" nolabel="1" widget="one2many_list">
