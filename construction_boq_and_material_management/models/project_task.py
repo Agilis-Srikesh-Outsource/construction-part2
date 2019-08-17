@@ -40,9 +40,33 @@ class ProjectMaterialConsumption(models.Model):
     available_stock = fields.Float(string='Available Stock',
                                    compute='_compute_tot_stock', readonly=True)
     consumption_progress = fields.Float(string="Consumption Progress")
-    wastage_percent = fields.Float(string="Wastage Percentage")
-    scrap_percent = fields.Float(string="Scrap Percentage")
+    wastage_percent = fields.Float(string="Wastage Percentage",
+                                   compute='_compute_waste_percent')
+    scrap_percent = fields.Float(string="Scrap Percentage",
+                                 compute='_compute_scrap_percent')
     task_id = fields.Many2one('project.task', 'Task')
+
+    @api.depends('task_id')
+    def _compute_waste_percent(self):
+        for material in self:
+            waste_mgmt = self.env['project.waste.management'].search([
+                ('task_id', '=', material.task_id.id),
+                ('product_id', '=', material.product_id.id)])
+            qty = 0
+            for waste in waste_mgmt:
+                qty += waste.qty
+                material.update({'wastage_percent': qty})
+
+    @api.depends('task_id')
+    def _compute_scrap_percent(self):
+        for material in self:
+            scrap_product = self.env['project.scrap.products'].search([
+                ('task_id', '=', material.task_id.id),
+                ('product_id', '=', material.product_id.id)])
+            qty = 0
+            for scrap in scrap_product:
+                qty += scrap.qty
+                material.update({'scrap_percent': qty})
 
     @api.depends('task_id.stock_location_id')
     def _update_tot_stock(self):
@@ -71,7 +95,8 @@ class ProjectMaterialConsumption(models.Model):
                 waste_qty = 0
                 scrap = 0
                 for waste in waste_management:
-                    waste_qty += waste.qty
+                    if waste.is_cutted is False:
+                        waste_qty += waste.qty
                 for scraps in scrap_product:
                     scrap += scraps.qty
                 avail_stock = material.tot_stock_received - (material.used_qty + waste_qty + scrap)
@@ -147,6 +172,7 @@ class ProjectWasteManagement(models.Model):
     wastage_percent = fields.Float(string='Wastage Percentage')
     date_recorded = fields.Date(string='Date Recorded')
     task_id = fields.Many2one('project.task', 'Task')
+    is_cutted = fields.Boolean(string="Is Cutted", default=False)
 
 
 class ProjectScrapProducts(models.Model):

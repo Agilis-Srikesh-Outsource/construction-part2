@@ -111,34 +111,16 @@ class ProjectWasteProcess(models.Model):
     def update_waste_process(self):
         uom = self.env.context['uom_id']
         waste_management = self.env['project.waste.management']
-        waste_manage = self.env['project.waste.management'].search([
-            ('task_id', '=', self.material_id.task_id.id)])
-        quant = 0
-        if waste_manage:
-            if self.material_id.product_id.id == self.product_id.id:
-                waste_manage.update({'product_id': self.product_id.id,
-                                     'qty': quant + self.quantity,
-                                     'task_id': self.material_id.task_id.id,
-                                     'date_recorded': fields.Date.today(),
-                                     'uom_id': uom
-                                     })
-            else:
-                waste_management.create({'product_id': self.product_id.id,
-                                         'qty': self.quantity,
-                                        'task_id': self.material_id.task_id.id,
-                                         'date_recorded': fields.Date.today(),
-                                         'uom_id': uom})
-        else:
-            waste_management.create({'product_id': self.product_id.id,
-                                     'qty': self.quantity,
-                                     'task_id': self.material_id.task_id.id,
-                                     'date_recorded': fields.Date.today(),
-                                     'uom_id': uom})
-        qty = self.material_id.available_stock - self.quantity
+        cutted = False
+        if self.material_waste == 'cutted':
+            cutted = True
+        waste_management.create({'product_id': self.product_id.id,
+                                 'qty': self.quantity,
+                                 'task_id': self.material_id.task_id.id,
+                                 'date_recorded': fields.Date.today(),
+                                 'uom_id': uom,
+                                 'is_cutted': cutted})
         if self.material_waste == 'whole':
-            self.material_id.write({'wastage_percent': quant + self.quantity,
-                                    'available_stock': qty
-                                    })
             stock_picking = self.env['stock.picking']
             stock_move = self.env['stock.move']
             picking = stock_picking.create({'picking_type_id': self.material_id.task_id.picking_type_id.id,
@@ -154,9 +136,6 @@ class ProjectWasteProcess(models.Model):
                     'location_id': picking.location_id.id,
                     'location_dest_id': picking.location_dest_id.id,
                 })
-        else:
-            self.material_id.write({'wastage_percent': self.quantity,
-                                    })
 
 
 class ProjectScrapMove(models.Model):
@@ -187,39 +166,15 @@ class ProjectScrapMove(models.Model):
     @api.multi
     def update_scrap_move(self):
         scrap_move = self.env['project.scrap.products']
-        scraps = self.env['project.scrap.products'].search([
-            ('task_id', '=', self.material_id.task_id.id)])
-        quant = 0
-        if scraps:
-            if self.material_id.product_id.id == self.product_id.id:
-                quant = scraps.qty
-                scraps.update({
-                            'product_id': self.product_id.id,
-                            'uom_id': self.uom_id.id,
-                            'qty': quant + self.quantity,
-                            'date_recorded': fields.Date.today(),
-                            'scrap_reason': self.description,
-                            'task_id': self.material_id.task_id.id,
-                    })
-            else:
-                scrap_move.create({'product_id': self.product_id.id,
-                                   'uom_id': self.uom_id.id,
-                                   'qty': self.quantity,
-                                   'date_recorded': fields.Date.today(),
-                                   'scrap_reason': self.description,
-                                   'task_id': self.material_id.task_id.id,
-                                   })
-        else:
-            scrap_move.create({'product_id': self.product_id.id,
-                               'uom_id': self.uom_id.id,
-                               'qty': self.quantity,
-                               'date_recorded': fields.Date.today(),
-                               'scrap_reason': self.description,
-                               'task_id': self.material_id.task_id.id,
-                               })
+        scrap_move.create({'product_id': self.product_id.id,
+                           'uom_id': self.uom_id.id,
+                           'qty': self.quantity,
+                           'date_recorded': fields.Date.today(),
+                           'scrap_reason': self.description,
+                           'task_id': self.material_id.task_id.id,
+                           })
         qty = self.material_id.available_stock - self.quantity
-        self.material_id.write({'scrap_percent': quant + self.quantity,
-                                'available_stock': qty
+        self.material_id.write({'available_stock': qty
                                 })
         stock_picking = self.env['stock.picking']
         stock_move = self.env['stock.move']
