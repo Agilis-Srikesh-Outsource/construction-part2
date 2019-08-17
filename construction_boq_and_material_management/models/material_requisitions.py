@@ -118,6 +118,7 @@ class SkitMaterialReq(models.Model):
                                         'mr_bom_id': self.id,
                                         'origin': self.name
                                         })
+
         for mr_material in self.mr_material_ids:
             move = stock_move.create({'name': _('New Move:') + mr_material.product_id.display_name,
                                       'product_id': mr_material.product_id.id,
@@ -127,7 +128,8 @@ class SkitMaterialReq(models.Model):
                                       'location_id': picking.location_id.id,
                                       'location_dest_id': picking.location_dest_id.id,
                                      })
-
+        picking.action_confirm()
+        picking.action_assign()
         self.write({'state': 'approved',
                     'approved_by': user.name,
                     'approved_date': datetime.today(),
