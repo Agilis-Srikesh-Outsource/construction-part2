@@ -18,9 +18,13 @@ class ProjectTask(models.Model):
     scrap_products = fields.One2many(
         'project.scrap.products', 'task_id', 'Scrap Products',
         copy=True, readonly=True)
-    boq_id = fields.Many2one('project.boq', 'BOM/BOQ Reference')
+    boq_id = fields.Many2one('project.boq', 'BOM/BOQ Reference',
+                             domain="[('state', '=', 'approved')]")
     phase_id = fields.Many2one('project.phase', string="Project Phase",
                                domain="[('project_id', '=', project_id)]")
+    stock_location_id = fields.Many2one('stock.location',
+                                        string="Task Inventory Location",
+                                        domain="[('location_id', '=', project_stock_location_id),('usage', '!=', 'view')]")
 
 
 class ProjectMaterialConsumption(models.Model):
@@ -29,7 +33,8 @@ class ProjectMaterialConsumption(models.Model):
 
     product_id = fields.Many2one('product.product', string="Product")
     estimated_qty = fields.Float(string='Estimated Quantity')
-    tot_stock_received = fields.Float(string='Total Stock Received')
+    tot_stock_received = fields.Float(string='Total Stock Received',
+                                      compute='_update_tot_stock')
     uom_id = fields.Many2one('product.uom', string="Unit of Measure")
     used_qty = fields.Float(string='Used Quantity', readonly=True)
     available_stock = fields.Float(string='Available Stock',
@@ -38,6 +43,19 @@ class ProjectMaterialConsumption(models.Model):
     wastage_percent = fields.Float(string="Wastage Percentage")
     scrap_percent = fields.Float(string="Scrap Percentage")
     task_id = fields.Many2one('project.task', 'Task')
+
+    @api.depends('task_id.stock_location_id')
+    def _update_tot_stock(self):
+        for material in self:
+            product = material.product_id.id
+            material_request = self.env['material.requisition.bom'].search([
+                ('task_id', '=', material.task_id.id)])
+            for mr_val in material_request:
+                location_id = mr_val.picking_id.location_dest_id.id
+                quant = self.env['stock.quant'].search([
+                    ('location_id', '=', location_id),
+                    ('product_id', '=', product)])
+                material.update({'tot_stock_received': quant.quantity})
 
     @api.depends('tot_stock_received')
     def _compute_tot_stock(self):
@@ -94,6 +112,7 @@ class ProjectMaterialConsumption(models.Model):
                 'context': {
                     'default_product_id': self.product_id.id,
                     'default_material_id': self.id,
+                    'default_uom_id': self.uom_id.id,
                     'task_id': self.task_id.id,
                     'uom_id': self.uom_id.id,
                 }

@@ -190,13 +190,19 @@ class SkitProjectBOQ(models.Model):
                     'approved_by': user.name,
                     'approved_date': datetime.today()})
         for material in self.boq_material_ids:
-            if not self.task_id.material_consumption:
-                self.task_id.material_consumption.create({
+            self.task_id.material_consumption.create({
                                         'product_id': material.product_id.id,
                                         'task_id': self.task_id.id,
                                         'uom_id': material.uom_id.id,
                                         'estimated_qty': material.qty
                                          })
+        if self.task_id:
+            self.task_id.write({'labor_budget': self.labor_total,
+                                'equipment_budget': self.equipment_total,
+                                'service_budget': self.scservice_total,
+                                'material_budget': self.material_total,
+                                'overhead_budget': self.overheadothers_total,
+                                'total_budget': self.total_boq})
 
     @api.multi
     def boq_action_cancel(self):
@@ -217,7 +223,7 @@ class SkitMaterial(models.Model):
     _name = 'boq.material'
 
     product_id = fields.Many2one('product.product', string="Name",
-                           domain=[('type', 'in', ('consu', 'product'))])
+                                 domain=[('type', '=', ('product'))])
     qty = fields.Float(string="Quantity",
                        digits=dp.get_precision('Product Price'))
     uom_id = fields.Many2one('product.uom', string="UOM",

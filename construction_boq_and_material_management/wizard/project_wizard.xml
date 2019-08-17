@@ -31,7 +31,17 @@
 						<field name="new_product_id"></field>
 						<field name="material_waste"></field>
 						<field name="quantity"></field>
-						<field name="waste_location"></field>
+					</group>
+						<div>
+							<label for="cutted_portion" string="Cutted Portion" attrs="{'invisible': [('material_waste', '=', 'whole')]}" class="oe_inline"/>
+							<field name="cutted_portion" attrs="{'invisible': [('material_waste', '=', 'whole')]}" class="oe_inline oe_input_margin"></field> <span attrs="{'invisible': [('material_waste', '=', 'whole')]}" class="oe_inline"> of </span> 
+							<field name="cutted_qty" attrs="{'invisible': [('material_waste', '=', 'whole')]}" class="oe_inline"></field>
+							<field name="uom_id" attrs="{'invisible': [('material_waste', '=', 'whole')]}" class="oe_inline"></field>
+							<label for="waste_percent" string="Waste Percentage" attrs="{'invisible': [('material_waste', '=', 'whole')]}" class="oe_inline"/>
+							<field name="waste_percent" widget="progressbar" attrs="{'invisible': [('material_waste', '=', 'whole')]}" class="oe_inline"></field>
+						</div>
+					<group>
+						<field name="waste_location_id"></field>
 						<field name="description" placeholder="Describe the product characteristics."></field>
 					</group>
 					<footer>
@@ -51,7 +61,7 @@
 						<field name="product_id"></field>
 						<field name="quantity"></field>
 						<field name="uom_id"></field>
-						<field name="scrap_percent"></field>
+						<field name="scrap_percent" widget="progressbar"></field>
 						<field name="scrap_location_id"></field>
 						<field name="description"></field>
 					</group>
