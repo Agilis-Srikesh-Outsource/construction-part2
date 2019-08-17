@@ -89,7 +89,7 @@ class ProjectWasteProcess(models.Model):
     quantity = fields.Float(string='Quantity')
     waste_location_id = fields.Many2one('stock.location',
                                         string="Waste Location",
-                                        domain="[('scrap_location', '=', False)]",
+                                        domain="[('usage', '=', 'internal'),('scrap_location', '=', False)]",
                                         required=True)
     description = fields.Text(string='Description',
                               required=True)
@@ -173,7 +173,7 @@ class ProjectScrapMove(models.Model):
                                  readonly=True)
     scrap_location_id = fields.Many2one('stock.location',
                                         string="Scrap Location", required=True,
-                                        domain="[('scrap_location', '=', True)]")
+                                        domain="[('usage', '=', 'internal'),('scrap_location', '=', True)]")
     description = fields.Text(string='Description',
                               required=True)
     material_id = fields.Many2one('project.material.consumption',
