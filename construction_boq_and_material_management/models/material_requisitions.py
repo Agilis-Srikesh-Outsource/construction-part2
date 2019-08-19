@@ -43,6 +43,21 @@ class SkitMaterialReq(models.Model):
     company_count = fields.Integer("Company Count", 
                                    compute="_get_company_count")
     mr_material_ids = fields.One2many('mr.bom.material', 'mr_id', "Material")
+    picking_id = fields.Many2one('stock.picking', 'Delivery Document')
+    picking_state = fields.Selection([
+        ('draft', 'Draft'),
+        ('waiting', 'Waiting Another Operation'),
+        ('confirmed', 'Waiting'),
+        ('assigned', 'Ready'),
+        ('done', 'Done'),
+        ('cancel', 'Cancelled'),
+    ], string='Delivery Status', compute='_compute_state',
+        copy=False, index=True, readonly=True, store=True, track_visibility='onchange')
+
+    @api.depends('picking_id.state')
+    def _compute_state(self):
+        for boq in self:
+            self.update({'picking_state': boq.picking_id.state})
 
     @api.depends('date')
     def _get_company_count(self):
@@ -94,12 +109,16 @@ class SkitMaterialReq(models.Model):
             delivery_qty = 0
         stock_picking = self.env['stock.picking']
         stock_move = self.env['stock.move']
+        res_user = self.env['res.users'].sudo().search([('id', '=', self.env.uid)])
+        stock_warehouse = self.env['stock.warehouse'].sudo().search([('company_id', '=', res_user.company_id.id)], limit=1)
         picking = stock_picking.create({'picking_type_id': self.operation_id.id,
-                                        'location_id': self.operation_id.default_location_src_id.id,
+                                        'location_id': stock_warehouse.lot_stock_id.id,
                                         'location_dest_id': self.task_id.stock_location_id.id if self.task_id.stock_location_id 
                                                                                 else self.operation_id.default_location_dest_id.id,
-                                        'mr_bom_id': self.id
+                                        'mr_bom_id': self.id,
+                                        'origin': self.name
                                         })
+
         for mr_material in self.mr_material_ids:
             move = stock_move.create({'name': _('New Move:') + mr_material.product_id.display_name,
                                       'product_id': mr_material.product_id.id,
@@ -109,10 +128,12 @@ class SkitMaterialReq(models.Model):
                                       'location_id': picking.location_id.id,
                                       'location_dest_id': picking.location_dest_id.id,
                                      })
-
+        picking.action_confirm()
+        picking.action_assign()
         self.write({'state': 'approved',
                     'approved_by': user.name,
-                    'approved_date': datetime.today()})
+                    'approved_date': datetime.today(),
+                    'picking_id': picking.id})
 
     @api.multi
     def mr_action_cancel(self):
@@ -148,7 +169,7 @@ class SkitMaterialReq(models.Model):
             if not mr_bom_material:
                 val = mr_material.create({'product_id': consumption.product_id.id,
                                 'mr_qty': (consumption.estimated_qty-(consumption.tot_stock_received+delivery_qty)),
-                                'uom_id': consumption.uom.id,
+                                'uom_id': consumption.uom_id.id,
                                 'mr_id': self.id,
                                 'material_consumption_id': consumption.id})
             delivery_qty = 0

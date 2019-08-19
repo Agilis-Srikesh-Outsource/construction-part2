@@ -72,45 +72,57 @@ class SkitProjectBOQ(models.Model):
     boq_overhead_ids = fields.One2many('boq.overhead', 'boq_id',
                                        string="OverHead")
 
+    @api.one
     @api.depends('boq_material_ids')
     def _compute_boq_material(self):
         material_total = 0
-        for material in self.boq_material_ids:
-            material_total = material_total+material.subtotal
-        self.update({'material_total': material_total})
+        for ids in self:
+            for material in ids.boq_material_ids:
+                material_total = material_total+material.subtotal
+            ids.update({'material_total': material_total})
 
+    @api.one
     @api.depends('boq_equipment_ids')
     def _compute_boq_equipment(self):
         equipment_total = 0
-        for equipment in self.boq_equipment_ids:
-            equipment_total = equipment_total+equipment.subtotal
-        self.update({'equipment_total': equipment_total})
+        for ids in self:
+            for equipment in ids.boq_equipment_ids:
+                equipment_total = equipment_total+equipment.subtotal
+            ids.update({'equipment_total': equipment_total})
 
+    @api.one
     @api.depends('boq_scservice_ids')
     def _compute_boq_scservice(self):
         scservice_total = 0
-        for service in self.boq_scservice_ids:
-            scservice_total = scservice_total + service.subtotal
-        self.update({'scservice_total': scservice_total})
+        for ids in self:
+            for service in ids.boq_scservice_ids:
+                scservice_total = scservice_total + service.subtotal
+            ids.update({'scservice_total': scservice_total})
 
+    @api.one
     @api.depends('boq_labor_ids')
     def _compute_boq_labor(self):
         labor_total = 0
-        for labor in self.boq_labor_ids:
-            labor_total = labor_total + labor.labor_total
-        self.update({'labor_total': labor_total})
+        for ids in self:
+            for labor in ids.boq_labor_ids:
+                labor_total = labor_total + labor.labor_total
+            ids.update({'labor_total': labor_total})
 
+    @api.one
     @api.depends('boq_overhead_ids')
     def _compute_boq_overhead(self):
         overhead_total = 0
-        for overhead in self.boq_overhead_ids:
-            overhead_total = overhead_total+overhead.subtotal
-        self.update({'overheadothers_total': overhead_total})
+        for ids in self:
+            for overhead in ids.boq_overhead_ids:
+                overhead_total = overhead_total+overhead.subtotal
+            ids.update({'overheadothers_total': overhead_total})
 
+    @api.one
     @api.depends('total_boq')
     def _compute_tot_boq(self):
-        tot_val = (self.labor_total+self.equipment_total+self.scservice_total+self.material_total+self.overheadothers_total)
-        self.update({'total_boq': tot_val})
+        for ids in self:
+            tot_val = (ids.labor_total+ids.equipment_total+ids.scservice_total+ids.material_total+ids.overheadothers_total)
+            ids.update({'total_boq': tot_val})
 
     @api.onchange('task_id')
     def onchange_task(self):
@@ -179,11 +191,18 @@ class SkitProjectBOQ(models.Model):
                     'approved_date': datetime.today()})
         for material in self.boq_material_ids:
             self.task_id.material_consumption.create({
-                                    'product_id': material.product_id.id,
-                                    'task_id': self.task_id.id,
-                                    'uom': material.uom_id.id,
-                                    'estimated_qty': material.qty
-                                     })
+                                        'product_id': material.product_id.id,
+                                        'task_id': self.task_id.id,
+                                        'uom_id': material.uom_id.id,
+                                        'estimated_qty': material.qty
+                                         })
+        if self.task_id:
+            self.task_id.write({'labor_budget': self.labor_total,
+                                'equipment_budget': self.equipment_total,
+                                'service_budget': self.scservice_total,
+                                'material_budget': self.material_total,
+                                'overhead_budget': self.overheadothers_total,
+                                'total_budget': self.total_boq})
 
     @api.multi
     def boq_action_cancel(self):
@@ -204,7 +223,7 @@ class SkitMaterial(models.Model):
     _name = 'boq.material'
 
     product_id = fields.Many2one('product.product', string="Name",
-                           domain=[('type', 'in', ('consu', 'product'))])
+                                 domain=[('type', '=', ('product'))])
     qty = fields.Float(string="Quantity",
                        digits=dp.get_precision('Product Price'))
     uom_id = fields.Many2one('product.uom', string="UOM",

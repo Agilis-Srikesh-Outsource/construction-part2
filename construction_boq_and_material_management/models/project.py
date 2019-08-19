@@ -15,6 +15,5 @@ class Project(models.Model):
             ('project_id', 'in', self.ids)], ['project_id'], ['project_id'])
         result = dict((data['project_id'][0], data['project_id_count']) for data in boq_data)
         for project in self:
-            project.boq_count = result.get(project.id, 0)
-
+            project.update({'boq_count': result.get(project.id, 0)})
     # END

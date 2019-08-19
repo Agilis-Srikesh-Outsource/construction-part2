@@ -59,9 +59,9 @@
 				       	</div>
 			            <group>
 				            <group>
-				            	<field name="project_id" required="1" attrs="{'readonly': [('state', '=', ('cancelled'))]}" options="{'no_create': True}"/>
-				            	<field name="phase_id" required="1" attrs="{'readonly': [('state', '=', ('cancelled'))]}" options="{'no_create': True}"/>
-				            	<field name="task_id"  required="1" attrs="{'readonly': [('state', '=', ('cancelled'))]}" options="{'no_create': True}"/>
+				            	<field name="project_id" required="1" attrs="{'readonly': [('state', '!=', ('draft'))]}" options="{'no_create': True}"/>
+				            	<field name="phase_id" required="1" attrs="{'readonly': [('state', '!=', ('draft'))], 'invisible': [('project_id', '=', False)]}" options="{'no_create': True}"/>
+				            	<field name="task_id"  required="1" attrs="{'readonly': [('state', '!=', ('draft'))], 'invisible': ['|',('project_id', '=', False), ('phase_id','=', False)]}" options="{'no_create': True}"/>
 				            	<field name="allocated_budget"/>
 				            	<field name="qty"/>
 				            	<field name="uom_id"/>
@@ -82,7 +82,7 @@
 			            <notebook>
 			            	<page string="Materials">
 				            	<group name="material" string="Materials">
-				            		<field name="boq_material_ids" nolabel="1" widget="one2many_list" mode="tree,kanban" attrs="{'readonly': [('state', '=', ('cancelled'))]}">
+				            		<field name="boq_material_ids" nolabel="1" widget="one2many_list" mode="tree,kanban" attrs="{'readonly': [('state', '!=', ('draft'))]}">
 					            		<tree string="Materials" editable="bottom">
 					            			<field name="product_id" required="1"/>
 							            	<field name="qty"/>
@@ -97,7 +97,7 @@
 			            	</page>
 			            	<page string="Equipment and SubContractor Services">
 			            		<group name="equipment" string="Equipment">
-				            		<field name="boq_equipment_ids" nolabel="1" widget="one2many_list" mode="tree,kanban" attrs="{'readonly': [('state', '=', ('cancelled'))]}">
+				            		<field name="boq_equipment_ids" nolabel="1" widget="one2many_list" mode="tree,kanban" attrs="{'readonly': [('state', '!=', ('draft'))]}">
 					            		<tree string="Equipment" editable="bottom">
 					            			<field name="name" required="1"/>
 							            	<field name="qty"/>
@@ -109,7 +109,7 @@
 				            		</field>
 			            		</group>
 			            		<group name="sub-con-ser" string="SubContractor Services">
-			            			<field name="boq_scservice_ids" nolabel="1" widget="one2many_list" mode="tree,kanban" attrs="{'readonly': [('state', '=', ('cancelled'))]}">
+			            			<field name="boq_scservice_ids" nolabel="1" widget="one2many_list" mode="tree,kanban" attrs="{'readonly': [('state', '!=', ('draft'))]}">
 					            		<tree string="SubContractor Services" editable="bottom">
 					            			<field name="product_id" required="1"/>
 					            			<field name="description"/>
@@ -123,7 +123,7 @@
 			            	</page>
 			            	<page string="Labor and Other Overheads">
 			            		<group string ="Labor">
-				            		<field name="boq_labor_ids" nolabel="1" widget="one2many_list" mode="tree,kanban" attrs="{'readonly': [('state', '=', ('cancelled'))]}">
+				            		<field name="boq_labor_ids" nolabel="1" widget="one2many_list" mode="tree,kanban" attrs="{'readonly': [('state', '!=', ('draft'))]}">
 					            		<tree string="Labor" editable="bottom">
 					            			<field name="job_id" required="1"/>
 							            	<field name="description"/>
@@ -137,7 +137,7 @@
 				            		</field>
 			            		</group>
 			            		<group string ="Overheads">
-				            		<field name="boq_overhead_ids" nolabel="1" widget="one2many_list" mode="tree,kanban" attrs="{'readonly': [('state', '=', ('cancelled'))]}">
+				            		<field name="boq_overhead_ids" nolabel="1" widget="one2many_list" mode="tree,kanban" attrs="{'readonly': [('state', '!=', ('draft'))]}">
 					            		<tree string="OverHead" editable="bottom">
 					            			<field name="category_id" required="1"/>
 					            			<field name="name" required="1"/>
@@ -151,7 +151,7 @@
 			            	</page>
 			            	<page string="Approvals">
 			            		<group string="Notes">
-			            			<field name="notes" nolabel="1"/>
+			            			<field name="notes" nolabel="1" attrs="{'readonly': [('state', '!=', ('draft'))]}"/>
 			            		</group>
 			            		<group col="4">
 				            		<group>

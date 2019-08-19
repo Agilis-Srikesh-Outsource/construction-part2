@@ -63,6 +63,8 @@
 				            	<field name="create_uid" string="Created By" readonly="1"/>
 				            	<field name="company_count" invisible="1"/>
 				   				<field name="company_id" required="1" attrs="{'invisible': [('company_count', '=', 1)] ,'readonly': [('state', 'in', ('approved','cancelled'))]}"/>
+				            	<field name="picking_id" readonly="1" attrs="{'invisible': [('state', '!=', 'approved')] }"/>
+				            	<field name="picking_state" readonly="1" attrs="{'invisible': [('state', '!=', 'approved')] }"/>
 				            </group>
 			            </group>
 			            <notebook>

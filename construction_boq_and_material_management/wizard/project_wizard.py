@@ -78,46 +78,64 @@ class ProjectWasteProcess(models.Model):
     new_product_id = fields.Many2one('product.product',
                                      string="New Product Name",
                                      required=True)
-    material_waste = fields.Many2one('product.product',
-                                     string="Material Waste",
-                                     required=True)
+    material_waste = fields.Selection([
+        ('whole', 'Whole Material Waste'),
+        ('cutted', 'Is there a Cutted/Portion Material Waste')],
+                                      string='Material Waste',
+                                      required=True, copy=False,
+                                      index=True,
+                                      track_visibility='onchange',
+                                      default='whole')
     quantity = fields.Float(string='Quantity')
-    waste_location = fields.Many2one('stock.location',
-                                     string="Waste Location",
-                                     required=True)
+    waste_location_id = fields.Many2one('stock.location',
+                                        string="Waste Location",
+                                        domain="[('usage', '=', 'internal'),('scrap_location', '=', False)]",
+                                        required=True)
     description = fields.Text(string='Description',
                               required=True)
     material_id = fields.Many2one('project.material.consumption',
                                   string="Material")
+    cutted_portion = fields.Float(string='Cutted Portion')
+    cutted_qty = fields.Float(string='')
+    uom_id = fields.Many2one('product.uom', string="Unit of Measure",
+                             readonly=True)
+    waste_percent = fields.Float(string="Waste Percentage",
+                                 compute='_update_waste_percent')
+
+    @api.depends('quantity')
+    def _update_waste_percent(self):
+        for val in self:
+            val.update({'waste_percent': val.quantity})
 
     @api.multi
     def update_waste_process(self):
-        uom = self.env.context['uom']
+        uom = self.env.context['uom_id']
         waste_management = self.env['project.waste.management']
-        waste_manage = self.env['project.waste.management'].search([
-            ('task_id', '=', self.material_id.task_id.id)])
-        if waste_manage:
-            if self.material_id.product_id.id == self.product_id.id:
-                waste_manage.update({'product_id': self.product_id.id,
-                                     'qty': self.quantity,
-                                     'task_id': self.material_id.task_id.id,
-                                     'date_recorded': fields.Date.today(),
-                                     'uom': uom
-                                     })
-            else:
-                waste_management.create({'product_id': self.product_id.id,
-                                         'qty': self.quantity,
-                                        'task_id': self.material_id.task_id.id,
-                                         'date_recorded': fields.Date.today(),
-                                         'uom': uom})
-        else:
-            waste_management.create({'product_id': self.product_id.id,
-                                     'qty': self.quantity,
-                                     'task_id': self.material_id.task_id.id,
-                                     'date_recorded': fields.Date.today(),
-                                     'uom': uom})
-        self.material_id.write({'wastage_percent': self.quantity,
-                                })
+        cutted = False
+        if self.material_waste == 'cutted':
+            cutted = True
+        waste_management.create({'product_id': self.product_id.id,
+                                 'qty': self.quantity,
+                                 'task_id': self.material_id.task_id.id,
+                                 'date_recorded': fields.Date.today(),
+                                 'uom_id': uom,
+                                 'is_cutted': cutted})
+        if self.material_waste == 'whole':
+            stock_picking = self.env['stock.picking']
+            stock_move = self.env['stock.move']
+            picking = stock_picking.create({'picking_type_id': self.material_id.task_id.picking_type_id.id,
+                                            'location_id': self.material_id.task_id.stock_location_id.id,
+                                            'location_dest_id': self.waste_location_id.id,
+                                            })
+            stock_move.create({
+                    'name': _('New Move:') + self.material_id.product_id.display_name,
+                    'product_id': self.material_id.product_id.id,
+                    'product_uom_qty': self.quantity,
+                    'product_uom': self.uom_id.id,
+                    'picking_id': picking.id,
+                    'location_id': picking.location_id.id,
+                    'location_dest_id': picking.location_dest_id.id,
+                })
 
 
 class ProjectScrapMove(models.Model):
@@ -127,50 +145,52 @@ class ProjectScrapMove(models.Model):
     product_id = fields.Many2one('product.product', string="Product",
                                  readonly=True)
     quantity = fields.Float(string='Quantity of Scrap Material')
-    uom = fields.Many2one('product.uom', string="Unit of Measure",
-                          readonly=True)
-    scrap_percent = fields.Float(string='Scrap Percentage', readonly=True)
-    scrap_location = fields.Many2one('stock.location',
-                                     string="Scrap Location",
-                                     required=True)
+    uom_id = fields.Many2one('product.uom', string="Unit of Measure",
+                             readonly=True)
+    scrap_percent = fields.Float(string='Scrap Percentage',
+                                 compute='_update_scrap_percent',
+                                 readonly=True)
+    scrap_location_id = fields.Many2one('stock.location',
+                                        string="Scrap Location", required=True,
+                                        domain="[('usage', '=', 'internal'),('scrap_location', '=', True)]")
     description = fields.Text(string='Description',
                               required=True)
     material_id = fields.Many2one('project.material.consumption',
                                   string="Material")
 
+    @api.depends('quantity')
+    def _update_scrap_percent(self):
+        for val in self:
+            val.update({'scrap_percent': val.quantity})
+
     @api.multi
     def update_scrap_move(self):
         scrap_move = self.env['project.scrap.products']
-        scraps = self.env['project.scrap.products'].search([
-            ('task_id', '=', self.material_id.task_id.id)])
-        if scraps:
-            if self.material_id.product_id.id == self.product_id.id:
-                scraps.update({
-                            'product_id': self.product_id.id,
-                            'uom': self.uom.id,
-                            'qty': self.quantity,
-                            'date_recorded': fields.Date.today(),
-                            'scrap_reason': self.description,
-                            'task_id': self.material_id.task_id.id,
-                    })
-            else:
-                scrap_move.create({'product_id': self.product_id.id,
-                                   'uom': self.uom.id,
-                                   'qty': self.quantity,
-                                   'date_recorded': fields.Date.today(),
-                                   'scrap_reason': self.description,
-                                   'task_id': self.material_id.task_id.id,
-                                   })
-        else:
-            scrap_move.create({'product_id': self.product_id.id,
-                               'uom': self.uom.id,
-                               'qty': self.quantity,
-                               'date_recorded': fields.Date.today(),
-                               'scrap_reason': self.description,
-                               'task_id': self.material_id.task_id.id,
-                               })
-        self.material_id.write({'scrap_percent': self.quantity,
+        scrap_move.create({'product_id': self.product_id.id,
+                           'uom_id': self.uom_id.id,
+                           'qty': self.quantity,
+                           'date_recorded': fields.Date.today(),
+                           'scrap_reason': self.description,
+                           'task_id': self.material_id.task_id.id,
+                           })
+        qty = self.material_id.available_stock - self.quantity
+        self.material_id.write({'available_stock': qty
                                 })
+        stock_picking = self.env['stock.picking']
+        stock_move = self.env['stock.move']
+        picking = stock_picking.create({'picking_type_id': self.material_id.task_id.picking_type_id.id,
+                                        'location_id': self.material_id.task_id.stock_location_id.id,
+                                        'location_dest_id': self.scrap_location_id.id,
+                                        })
+        stock_move.create({
+                'name': _('New Move:') + self.material_id.product_id.display_name,
+                'product_id': self.material_id.product_id.id,
+                'product_uom_qty': self.quantity,
+                'product_uom': self.uom_id.id,
+                'picking_id': picking.id,
+                'location_id': picking.location_id.id,
+                'location_dest_id': picking.location_dest_id.id,
+            })
 
 
 class SkitStockPicking(models.Model):
