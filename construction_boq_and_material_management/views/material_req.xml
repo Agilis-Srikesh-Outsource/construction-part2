@@ -189,42 +189,69 @@
 			            <group>
 				            <group>
 				            	<field name="required_date"  attrs="{'readonly': [('state', '=', ('cancelled'))]}" options="{'no_create': True}"/>
-				            	<field name="operation_id" attrs="{'readonly': [('state', '=', ('cancelled'))]}" options="{'no_create': True}"/>
+				            	<field name="operation_id" required="1" attrs="{'readonly': [('state', '=', ('cancelled'))]}" options="{'no_create': True}"/>
 				            	<field name="analytic_account_id" attrs="{'readonly': [('state', '=', ('cancelled'))]}" options="{'no_create': True}"/>
 				            </group>
 				            <group>
 				            	<field name="date" readonly="1"/>
 				            	<field name="create_uid" string="Created By" readonly="1"/>
-				            	<field name="company_id" attrs="{'readonly': [('state', '=', ('cancelled'))]}"/>
+				            	<field name="company_count" invisible="1"/>
+				   				<field name="company_id" required="1" attrs="{'invisible': [('company_count', '=', 1)] ,'readonly': [('state', 'in', ('approved','cancelled'))]}"/>
+				   				<field name="picking_id" readonly="1" attrs="{'invisible': [('state', '!=', 'approved')] }"/>
+				            	<field name="picking_state" readonly="1" attrs="{'invisible': [('state', '!=', 'approved')] }"/>
 				            </group>
 			            </group>
-			           	<group string="Materials">
-				            <field name="mr_material_nonbom_ids" nolabel="1" widget="one2many_list" mode="tree,kanban" attrs="{'readonly': [('state', '=', ('cancelled'))]}">
-				            	<form string="Material(Non-BOM)">
+			            <notebook>
+				           	<page string="Materials">
+					            <field name="mr_material_nonbom_ids" nolabel="1" widget="one2many_list" mode="tree,kanban" attrs="{'readonly': [('state', '=', ('cancelled'))]}">
+					            	<form string="Material(Non-BOM)">
+					            		<group>
+					            			<group>
+					            				<field name="product_id"/>
+					            				<field name="mr_qty"/>
+					            				<field name="uom_id"/>
+					            			</group>
+					            			<group>
+					            				<field name="exceeded_qty"/>
+					            				<field name="not_task_bom"/>
+					            			</group>
+					            		</group>
+					            	</form>	
+					            	<tree string="Material(Non-BOM)" editable="bottom">
+					            		<field name="product_id"/>
+					            		<field name="mr_qty"/>
+					            		<field name="uom_id"/>
+					            		<field name="exceeded_qty"/>
+					            		<field name="not_task_bom"/>
+					            	</tree>		
+					            </field>
+					            <group string="Notes">
+					            	<field name="notes" nolabel="1" placeholder="Indent Notes..."/>
+					            </group>
+				            </page>
+				            <page string="Approvals">
+				            	<group>
 				            		<group>
-				            			<group>
-				            				<field name="product_id"/>
-				            				<field name="mr_qty"/>
-				            				<field name="uom_id"/>
-				            			</group>
-				            			<group>
-				            				<field name="exceeded_qty"/>
-				            				<field name="not_task_bom"/>
-				            			</group>
+				            			<field name="submitted_by"/>
+				            			<field name="confirmed_by"/>
+				            			<field name="cancelled_by"/>
 				            		</group>
-				            	</form>	
-				            	<tree string="Material(Non-BOM)" editable="bottom">
-				            		<field name="product_id"/>
-				            		<field name="mr_qty"/>
-				            		<field name="uom_id"/>
-				            		<field name="exceeded_qty"/>
-				            		<field name="not_task_bom"/>
-				            	</tree>		
-				            </field>
-			            </group>
-			            <group string="Notes">
-			            	<field name="notes" nolabel="1" placeholder="Indent Notes..."/>
-			            </group>
+				            		<group>
+				            			<field name="submitted_date"/>
+				            			<field name="confirmed_date" />
+				            			<field name="cancelled_date" />
+				            		</group>
+			            			<group>
+				            			<field name="verified_by"/>
+				            			<field name="approved_by"/>
+				            		</group>
+				            		<group>
+				            			<field name="verified_date" />
+				            			<field name="approved_date"/>
+				            		</group>
+			            		</group>
+				            </page>
+			            </notebook>
 			         </sheet>
 				</form>
 			</field>

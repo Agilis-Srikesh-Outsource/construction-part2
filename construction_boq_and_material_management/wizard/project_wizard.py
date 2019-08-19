@@ -35,23 +35,25 @@ class ProjectUsedQuantity(models.Model):
         to_loc = self.material_id.task_id.picking_type_id.default_location_dest_id.id
         stock_picking = self.env['stock.picking'].search([
             ('material_id', '=', self.material_id.id)])
-        stock_move = self.env['stock.move'].search([
-            ('picking_id', '=', stock_picking.id)])
         if stock_picking:
-            stock_picking.update({
-                'picking_type_id': self.material_id.task_id.picking_type_id.id,
-                'location_id': from_loc,
-                'location_dest_id': to_loc,
-                                            })
-            if stock_move:
-                stock_move.update({
-                    'product_id': self.material_id.product_id.id,
-                    'product_uom_qty': self.quantity,
-                    'product_uom': self.material_id.product_id.uom_id.id,
-                    'location_id': stock_picking.location_id.id,
-                    'location_dest_id': stock_picking.location_dest_id.id,
-                })
+            for pickings in stock_picking:
+                stock_move = self.env['stock.move'].search([
+                    ('picking_id', '=', pickings.id)])
+                pickings.update({
+                    'picking_type_id': self.material_id.task_id.picking_type_id.id,
+                    'location_id': from_loc,
+                    'location_dest_id': to_loc,
+                                                })
+                if stock_move:
+                    stock_move.update({
+                        'product_id': self.material_id.product_id.id,
+                        'product_uom_qty': self.quantity,
+                        'product_uom': self.material_id.product_id.uom_id.id,
+                        'location_id': pickings.location_id.id,
+                        'location_dest_id': pickings.location_dest_id.id,
+                    })
         else:
+            stock_move = self.env['stock.move']
             picking = stock_picking.create({
                 'picking_type_id': self.material_id.task_id.picking_type_id.id,
                 'location_id': from_loc,

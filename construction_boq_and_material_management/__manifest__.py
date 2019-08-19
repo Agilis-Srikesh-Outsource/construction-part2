@@ -16,7 +16,8 @@
         'wizard/project_wizard.xml',
         'views/project_task.xml',
         'views/task.xml',
-        'views/material_req.xml'
+        'views/material_req.xml',
+        'views/project_eco.xml',
         ],
     'depends': [
             'project',
