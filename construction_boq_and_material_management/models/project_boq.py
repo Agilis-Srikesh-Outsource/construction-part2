@@ -225,7 +225,8 @@ class SkitProjectBOQ(models.Model):
                                 'service_budget': self.scservice_total,
                                 'material_budget': self.material_total,
                                 'overhead_budget': self.overheadothers_total,
-                                'total_budget': self.total_boq})
+                                'total_budget': self.total_boq,
+                                'boq_id': self.id})
 
     @api.multi
     def boq_action_cancel(self):

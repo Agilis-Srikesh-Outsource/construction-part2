@@ -19,7 +19,7 @@ class ProjectTask(models.Model):
         'project.scrap.products', 'task_id', 'Scrap Products',
         copy=True, readonly=True)
     boq_id = fields.Many2one('project.boq', 'BOM/BOQ Reference',
-                             domain="[('state', '=', 'approved')]")
+                             readonly=True)
     phase_id = fields.Many2one('project.phase', string="Project Phase",
                                domain="[('project_id', '=', project_id)]")
     stock_location_id = fields.Many2one('stock.location',
@@ -117,7 +117,6 @@ class ProjectMaterialConsumption(models.Model):
                 'target': 'new',
                 'context': {
                     'default_product_id': self.product_id.id,
-                    'default_quantity': self.used_qty,
                     'default_material_id': self.id,
                     'task_id': self.task_id.id,
                     'received': self.tot_stock_received
