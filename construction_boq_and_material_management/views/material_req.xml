@@ -6,7 +6,7 @@
             <field name="name">MR Code</field>
             <field name="code">material.requisition.bom</field>
             <field eval="4" name="padding" />
-            <field name="prefix">MR</field>
+            <field name="prefix">MR/BOM/</field>
             <field name="company_id" eval="False" />
         </record>
         
@@ -145,7 +145,7 @@
             <field name="name">MR Code</field>
             <field name="code">material.requisition.nonbom</field>
             <field eval="4" name="padding" />
-            <field name="prefix">MR</field>
+            <field name="prefix">MR/NBOM/</field>
             <field name="company_id" eval="False" />
         </record>
         
@@ -190,9 +190,9 @@
 				       	</div>
 			            <group>
 				            <group>
-				            	<field name="required_date"  attrs="{'readonly': [('state', '=', ('cancelled'))]}" options="{'no_create': True}"/>
-				            	<field name="operation_id" required="1" attrs="{'readonly': [('state', '=', ('cancelled'))]}" options="{'no_create': True}"/>
-				            	<field name="analytic_account_id" attrs="{'readonly': [('state', '=', ('cancelled'))]}" options="{'no_create': True}"/>
+				            	<field name="required_date"  attrs="{'readonly': [('state', 'in', ('approved','cancelled'))]}" options="{'no_create': True}"/>
+				            	<field name="operation_id" required="1" attrs="{'readonly': [('state', 'in', ('approved','cancelled'))]}" options="{'no_create': True}"/>
+				            	<field name="analytic_account_id" attrs="{'readonly': [('state', 'in', ('approved','cancelled'))]}" options="{'no_create': True}"/>
 				            </group>
 				            <group>
 				            	<field name="date" readonly="1"/>
@@ -205,7 +205,7 @@
 			            </group>
 			            <notebook>
 				           	<page string="Materials">
-					            <field name="mr_material_nonbom_ids" nolabel="1" widget="one2many_list" mode="tree,kanban" attrs="{'readonly': [('state', '=', ('cancelled'))]}">
+					            <field name="mr_material_nonbom_ids" nolabel="1" widget="one2many_list" mode="tree,kanban" attrs="{'readonly': [('state', 'in', ('approved','cancelled'))]}">
 					            	<form string="Material(Non-BOM)">
 					            		<group>
 					            			<group>

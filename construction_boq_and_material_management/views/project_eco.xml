@@ -48,11 +48,11 @@
 				       	</div>
 			            <group>
 				            <group>
-				            	<field name="project_id" required="1" attrs="{'readonly': [('state', '=', ('cancelled'))]}"/>
-				            	<field name="phase_id" required="1" attrs="{'readonly': [('state', '=', ('cancelled'))]}"/>
-				            	<field name="task_id" required="1" attrs="{'readonly': [('state', '=', ('cancelled'))]}"/>
-				            	<field name="boq_id" required="1" attrs="{'readonly': [('state', '=', ('cancelled'))]}"/>
-				            	<field name="request_date"/>
+				            	<field name="project_id" required="1" attrs="{'readonly': [('state', 'in', ('approved','cancelled'))]}" options="{'no_create': True}"/>
+				            	<field name="phase_id" required="1" attrs="{'readonly': [('state', 'in', ('approved','cancelled'))]}" options="{'no_create': True}"/>
+				            	<field name="task_id" required="1" attrs="{'readonly': [('state', 'in', ('approved','cancelled'))]}" options="{'no_create': True}"/>
+				            	<field name="boq_id" required="1" attrs="{'readonly': [('state', 'in', ('approved','cancelled'))]}" options="{'no_create': True}"/>
+				            	<field name="request_date" attrs="{'readonly': [('state', 'in', ('approved','cancelled'))]}"/>
 				            </group>
 				            <group name="budget_summary">
 								<table class="table table-striped table-hover" colspan="2">
@@ -188,10 +188,10 @@
 			            <notebook>
 			            	<page string="Materials">
 				            	<group name="material" string="Materials">
-				            		<field name="eco_material_ids" nolabel="1" context="{'default_boq_id':boq_id}" widget="one2many_list" mode="tree,kanban" attrs="{'readonly': [('state', '=', ('cancelled'))]}">
+				            		<field name="eco_material_ids" nolabel="1" context="{'default_boq_id':boq_id}" widget="one2many_list" mode="tree,kanban" attrs="{'readonly': [('state', 'in', ('approved','cancelled'))]}">
 					            		<tree string="Materials" editable="bottom">
-					            			<field name="eco_mode"/>
-					            			<field name="boq_material_id"  options="{'no_quick_create': True, 'no_create_edit' : True}" domain="[('boq_id', '=', context.get('default_boq_id'))]" attrs="{'readonly': [('eco_mode', '=', ('new'))],'required':[('eco_mode','!=',('new'))]}"/>
+					            			<field name="eco_mode" required="1" />
+					            			<field name="boq_material_id"  options="{'no_quick_create': True, 'no_create_edit' : True}" domain="[('boq_id', '=', context.get('default_boq_id'))]" attrs="{'readonly': [('eco_mode', '!=', ('update'))],'required':[('eco_mode','!=',('new'))]}"/>
 					            			<field name="product_id"/>
 					            			<field name="boq_qty" attrs="{'readonly': [('eco_mode', '!=', ('new'))],'required':[('eco_mode','=',('new'))]}"/>
 							            	<field name="qty" attrs="{'readonly': [('eco_mode', '=', ('new'))],'required':[('eco_mode','!=',('new'))]}"/>
@@ -210,10 +210,10 @@
 			            	</page>
 			            	<page string="Equipment and SubContractor Services">
 			            		<group name="equipment" string="Equipment">
-				            		<field name="eco_equipment_ids" nolabel="1" context="{'default_boq_id':boq_id}" widget="one2many_list" mode="tree,kanban" attrs="{'readonly': [('state', '=', ('cancelled'))]}">
+				            		<field name="eco_equipment_ids" nolabel="1" context="{'default_boq_id':boq_id}" widget="one2many_list" mode="tree,kanban" attrs="{'readonly': [('state', 'in', ('approved','cancelled'))]}">
 					            		<tree string="Equipment" editable="bottom">
-					            			<field name="eco_mode"/>
-					            			<field name="boq_equipment_id" options="{'no_quick_create': True, 'no_create_edit' : True}" domain="[('boq_id', '=', context.get('default_boq_id'))]" attrs="{'readonly': [('eco_mode', '=', ('new'))],'required':[('eco_mode','!=',('new'))]}"/>
+					            			<field name="eco_mode" required="1" />
+					            			<field name="boq_equipment_id" options="{'no_quick_create': True, 'no_create_edit' : True}" domain="[('boq_id', '=', context.get('default_boq_id'))]" attrs="{'readonly': [('eco_mode', '!=', ('update'))],'required':[('eco_mode','!=',('new'))]}"/>
 					            			<field name="name"/>
 					            			<field name="boq_qty" attrs="{'readonly': [('eco_mode', '!=', ('new'))],'required':[('eco_mode','=',('new'))]}"/>
 							            	<field name="qty" attrs="{'readonly': [('eco_mode', '=', ('new'))],'required':[('eco_mode','!=',('new'))]}"/>
@@ -227,10 +227,10 @@
 				            		</field>
 			            		</group>
 			            		<group name="sub-con-ser" string="SubContractor Services">
-			            			<field name="eco_scservice_ids" nolabel="1" context="{'default_boq_id':boq_id}" widget="one2many_list" mode="tree,kanban" attrs="{'readonly': [('state', '=', ('cancelled'))]}">
+			            			<field name="eco_scservice_ids" nolabel="1" context="{'default_boq_id':boq_id}" widget="one2many_list" mode="tree,kanban" attrs="{'readonly': [('state', 'in', ('approved','cancelled'))]}">
 					            		<tree string="SubContractor Services" editable="bottom">
-					            			<field name="eco_mode"/>
-					            			<field name="boq_scservice_id" options="{'no_quick_create': True, 'no_create_edit' : True}" domain="[('boq_id', '=', context.get('default_boq_id'))]" attrs="{'readonly': [('eco_mode', '=', ('new'))],'required':[('eco_mode','!=',('new'))]}"/>
+					            			<field name="eco_mode" required="1" />
+					            			<field name="boq_scservice_id" options="{'no_quick_create': True, 'no_create_edit' : True}" domain="[('boq_id', '=', context.get('default_boq_id'))]" attrs="{'readonly': [('eco_mode', '!=', ('update'))],'required':[('eco_mode','!=',('new'))]}"/>
 					            			<field name="product_id"/>
 					            			<field name="boq_qty" attrs="{'readonly': [('eco_mode', '!=', ('new'))],'required':[('eco_mode','=',('new'))]}"/>
 							            	<field name="qty" attrs="{'readonly': [('eco_mode', '=', ('new'))],'required':[('eco_mode','!=',('new'))]}"/>
@@ -244,10 +244,10 @@
 			            	</page>
 			            	<page string="Labor and Other Overheads">
 			            		<group string ="Labor">
-				            		<field name="eco_labor_ids" nolabel="1" context="{'default_boq_id':boq_id}" widget="one2many_list" mode="tree,kanban" attrs="{'readonly': [('state', '=', ('cancelled'))]}">
+				            		<field name="eco_labor_ids" nolabel="1" context="{'default_boq_id':boq_id}" widget="one2many_list" mode="tree,kanban" attrs="{'readonly': [('state', 'in', ('approved','cancelled'))]}">
 					            		<tree string="Labor" editable="bottom">
-					            			<field name="eco_mode"/>
-					            			<field name="boq_labor_id" options="{'no_quick_create': True, 'no_create_edit' : True}" domain="[('boq_id', '=', context.get('default_boq_id'))]" attrs="{'readonly': [('eco_mode', '=', ('new'))],'required':[('eco_mode','!=',('new'))]}"/>
+					            			<field name="eco_mode" required="1" />
+					            			<field name="boq_labor_id" options="{'no_quick_create': True, 'no_create_edit' : True}" domain="[('boq_id', '=', context.get('default_boq_id'))]" attrs="{'readonly': [('eco_mode', '!=', ('update'))],'required':[('eco_mode','!=',('new'))]}"/>
 					            			<field name="job_id"/>
 					            			<field name="description" />
 					            			<field name="boq_head_count" attrs="{'readonly': [('eco_mode', '!=', ('new'))],'required':[('eco_mode','=',('new'))]}"/>
@@ -262,10 +262,10 @@
 				            		</field>
 			            		</group>
 			            		<group string ="Overheads">
-				            		<field name="eco_overhead_ids" nolabel="1" context="{'default_boq_id':boq_id}" widget="one2many_list" mode="tree,kanban" attrs="{'readonly': [('state', '=', ('cancelled'))]}">
+				            		<field name="eco_overhead_ids" nolabel="1" context="{'default_boq_id':boq_id}" widget="one2many_list" mode="tree,kanban" attrs="{'readonly': [('state', 'in', ('approved','cancelled'))]}">
 					            		<tree string="Labor" editable="bottom">
-					            			<field name="eco_mode"/>
-					            			<field name="boq_overhead_id" options="{'no_quick_create': True, 'no_create_edit' : True}" domain="[('boq_id', '=', context.get('default_boq_id'))]" attrs="{'readonly': [('eco_mode', '=', ('new'))],'required':[('eco_mode','!=',('new'))]}"/>
+					            			<field name="eco_mode" required="1" />
+					            			<field name="boq_overhead_id" options="{'no_quick_create': True, 'no_create_edit' : True}" domain="[('boq_id', '=', context.get('default_boq_id'))]" attrs="{'readonly': [('eco_mode', '!=', ('update'))],'required':[('eco_mode','!=',('new'))]}"/>
 					            			<field name="category_id"/>
 					            			<field name="name" />
 					            			<field name="boq_qty" attrs="{'readonly': [('eco_mode', '!=', ('new'))],'required':[('eco_mode','=',('new'))]}"/>

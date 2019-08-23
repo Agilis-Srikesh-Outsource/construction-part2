@@ -2,6 +2,7 @@
 
 from odoo import fields, models, api, _
 from datetime import datetime
+from odoo.exceptions import UserError
 
 
 class SkitMaterialReq(models.Model):
@@ -138,6 +139,9 @@ class SkitMaterialReq(models.Model):
     @api.multi
     def mr_action_cancel(self):
         user = self.env['res.users'].browse(self.env.uid)
+        if self.picking_id.state == 'done':
+            raise UserError(_("Material Request can't be cancelled for validated Delivery Document."))
+        self.picking_id.action_cancel()
         return self.write({'state': 'cancelled',
                            'cancelled_by': user.name,
                            'cancelled_date': datetime.today()})
@@ -355,7 +359,13 @@ class SkitMaterialReqNonBOM(models.Model):
 
     @api.multi
     def mr_nonbom_action_cancel(self):
-        return self.write({'state': 'cancelled'})
+        user = self.env['res.users'].browse(self.env.uid)
+        if self.picking_id.state == 'done':
+            raise UserError(_("Material Request can't be cancelled for validated Delivery Document."))
+        self.picking_id.action_cancel()
+        return self.write({'state': 'cancelled',
+                           'cancelled_by': user.name,
+                           'cancelled_date': datetime.today()})
 
     @api.multi
     def mr_nonbom_action_draft(self):

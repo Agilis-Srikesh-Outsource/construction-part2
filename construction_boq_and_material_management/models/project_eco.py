@@ -366,16 +366,27 @@ class SkitECOMaterial(models.Model):
     subtotal = fields.Float("Subtotal", compute='_compute_eco_material_total',store=True)
     eco_id = fields.Many2one('project.eco', string='ECO', required=True, ondelete='cascade', index=True, copy=False)
 
-    @api.depends('boq_qty', 'qty', 'boq_unit_rate', 'unit_rate', 'boq_labor_cost', 'labor_cost', 'boq_equipment_budget', 'equipment_budget', 'boq_equipment_budget_diff')
+    @api.depends('boq_qty', 'qty', 'boq_unit_rate', 'unit_rate', 'boq_labor_cost', 'labor_cost', 'boq_equipment_budget', 'equipment_budget')
     def _compute_eco_material_total(self):
         for material in self:
-            val = ((material.boq_unit_rate+material.unit_rate) + (material.boq_labor_cost+material.labor_cost) + (material.boq_equipment_budget+material.equipment_budget) + (material.boq_equipment_budget_diff))
+            val = ((material.boq_unit_rate+material.unit_rate) + (material.boq_labor_cost+material.labor_cost) + (material.boq_equipment_budget+material.equipment_budget))
             qty = (material.boq_qty + material.qty)
             subtotal = (val)*(qty)
             material.update({'subtotal': subtotal})
 
+    @api.onchange('eco_mode')
+    def onchange_eco_mode(self):
+        rest_of_vals = self.eco_id.eco_material_ids - self
+        if self.eco_mode == 'update':
+            boq_material_ids = []
+            for record in rest_of_vals:
+                if(record.boq_material_id):
+                    boq_material_ids.append(record.boq_material_id.id)
+            return {'domain': {'boq_material_id': [('boq_id', '=', self.eco_id.boq_id.id),
+                                                   ('id', 'not in', boq_material_ids)]}}
+
     @api.onchange('boq_material_id')
-    def onchage_boq_material(self):
+    def onchange_boq_material(self):
         if self.eco_mode == 'update':
             if self.boq_material_id:
                 self.update({'product_id': self.boq_material_id.product_id.id,
@@ -429,16 +440,27 @@ class SkitECOEquipment(models.Model):
                              ondelete='cascade', index=True, copy=False)
 
     @api.depends('boq_qty', 'qty', 'boq_unit_rate', 'boq_no_of_hrs',
-                 'no_of_hrs', 'boq_equipment_budget')
+                 'no_of_hrs')
     def _compute_eco_equipment_total(self):
         for equipment in self:
-            val = ((equipment.boq_unit_rate) + (equipment.boq_no_of_hrs + equipment.no_of_hrs) + (equipment.boq_equipment_budget))
+            val = ((equipment.boq_unit_rate) + (equipment.boq_no_of_hrs + equipment.no_of_hrs))
             qty = (equipment.boq_qty + equipment.qty)
             subtotal = (val)*(qty)
             equipment.update({'subtotal': subtotal})
 
+    @api.onchange('eco_mode')
+    def onchange_eco_mode(self):
+        rest_of_vals = self.eco_id.eco_equipment_ids - self
+        if self.eco_mode == 'update':
+            boq_equipment_ids = []
+            for record in rest_of_vals:
+                if(record.boq_equipment_id):
+                    boq_equipment_ids.append(record.boq_equipment_id.id)
+            return {'domain': {'boq_equipment_id': [('boq_id', '=', self.eco_id.boq_id.id),
+                                                   ('id', 'not in', boq_equipment_ids)]}}
+
     @api.onchange('boq_equipment_id')
-    def onchage_boq_equipment(self):
+    def onchange_boq_equipment(self):
         if self.eco_mode == 'update':
             if self.boq_equipment_id:
                 self.update({'name': self.boq_equipment_id.name,
@@ -482,16 +504,27 @@ class SkitECOSCService(models.Model):
     eco_id = fields.Many2one('project.eco', string='ECO', required=True,
                              ondelete='cascade', index=True, copy=False)
 
-    @api.depends('boq_qty', 'qty', 'boq_unit_rate', 'boq_equipment_budget')
+    @api.depends('boq_qty', 'qty', 'boq_unit_rate')
     def _compute_eco_scservice_total(self):
         for service in self:
-            val = ((service.boq_unit_rate) + (service.boq_equipment_budget))
+            val = ((service.boq_unit_rate))
             qty = (service.boq_qty + service.qty)
             subtotal = (val)*(qty)
             service.update({'subtotal': subtotal})
 
+    @api.onchange('eco_mode')
+    def onchange_eco_mode(self):
+        rest_of_vals = self.eco_id.eco_scservice_ids - self
+        if self.eco_mode == 'update':
+            boq_scservice_ids = []
+            for record in rest_of_vals:
+                if(record.boq_scservice_id):
+                    boq_scservice_ids.append(record.boq_scservice_id.id)
+            return {'domain': {'boq_scservice_id': [('boq_id', '=', self.eco_id.boq_id.id),
+                                                   ('id', 'not in', boq_scservice_ids)]}}
+
     @api.onchange('boq_scservice_id')
-    def onchage_boq_scservice(self):
+    def onchange_boq_scservice(self):
         if self.eco_mode == 'update':
             if self.boq_scservice_id:
                 self.update({'product_id': self.boq_scservice_id.product_id.id,
@@ -554,8 +587,19 @@ class SkitECOLabor(models.Model):
             total = (labor.subtotal*labor.dur_payment_term)
             labor.update({'total': total})
 
+    @api.onchange('eco_mode')
+    def onchange_eco_mode(self):
+        rest_of_vals = self.eco_id.eco_labor_ids - self
+        if self.eco_mode == 'update':
+            boq_labor_ids = []
+            for record in rest_of_vals:
+                if(record.boq_labor_id):
+                    boq_labor_ids.append(record.boq_labor_id.id)
+            return {'domain': {'boq_labor_id': [('boq_id', '=', self.eco_id.boq_id.id),
+                                                   ('id', 'not in', boq_labor_ids)]}}
+
     @api.onchange('boq_labor_id')
-    def onchage_boq_labor(self):
+    def onchange_boq_labor(self):
         if self.eco_mode == 'update':
             if self.boq_labor_id:
                 self.update({'job_id': self.boq_labor_id.job_id.id,
@@ -619,8 +663,19 @@ class SkitECOOverhead(models.Model):
             subtotal = (val)*(qty)
             overhead.update({'subtotal': subtotal})
 
+    @api.onchange('eco_mode')
+    def onchange_eco_mode(self):
+        rest_of_vals = self.eco_id.eco_overhead_ids - self
+        if self.eco_mode == 'update':
+            boq_overhead_ids = []
+            for record in rest_of_vals:
+                if(record.boq_overhead_id):
+                    boq_overhead_ids.append(record.boq_overhead_id.id)
+            return {'domain': {'boq_overhead_id': [('boq_id', '=', self.eco_id.boq_id.id),
+                                                   ('id', 'not in', boq_overhead_ids)]}}
+
     @api.onchange('boq_overhead_id')
-    def onchage_boq_overhead(self):
+    def onchange_boq_overhead(self):
         if self.eco_mode == 'update':
             if self.boq_overhead_id:
                 self.update({'category_id': self.boq_overhead_id.category_id.id,

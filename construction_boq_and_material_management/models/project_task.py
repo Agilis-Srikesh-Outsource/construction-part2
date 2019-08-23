@@ -74,12 +74,15 @@ class ProjectMaterialConsumption(models.Model):
             product = material.product_id.id
             material_request = self.env['material.requisition.bom'].search([
                 ('task_id', '=', material.task_id.id)])
+            qty = 0
             for mr_val in material_request:
                 location_id = mr_val.picking_id.location_dest_id.id
-                quant = self.env['stock.quant'].search([
-                    ('location_id', '=', location_id),
+                move = self.env['stock.move'].search([
+                    ('picking_id', '=', mr_val.picking_id.id),
                     ('product_id', '=', product)])
-                material.update({'tot_stock_received': quant.quantity})
+                for vals in move:
+                    qty += vals.quantity_done
+                material.update({'tot_stock_received': qty})
 
     @api.depends('tot_stock_received')
     def _compute_tot_stock(self):

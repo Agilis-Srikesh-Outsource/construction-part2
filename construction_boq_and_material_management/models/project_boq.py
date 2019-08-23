@@ -212,13 +212,31 @@ class SkitProjectBOQ(models.Model):
         self.write({'state': 'approved',
                     'approved_by': user.name,
                     'approved_date': datetime.today()})
+        ids = []
         for material in self.boq_material_ids:
-            self.task_id.material_consumption.create({
-                                        'product_id': material.product_id.id,
-                                        'task_id': self.task_id.id,
-                                        'uom_id': material.uom_id.id,
-                                        'estimated_qty': material.qty
-                                         })
+            if self.task_id.material_consumption:
+                for vals in self.task_id.material_consumption.filtered(lambda l: l.product_id.id == material.product_id.id):
+                    ids.append(vals.product_id.id)
+                    vals.write({
+                                'product_id': material.product_id.id,
+                                'task_id': self.task_id.id,
+                                'uom_id': material.uom_id.id,
+                                'estimated_qty': material.qty
+                                })
+                if material.product_id.id not in ids:
+                    self.task_id.material_consumption.create({
+                                            'product_id': material.product_id.id,
+                                            'task_id': self.task_id.id,
+                                            'uom_id': material.uom_id.id,
+                                            'estimated_qty': material.qty
+                                             })
+            else:
+                self.task_id.material_consumption.create({
+                                            'product_id': material.product_id.id,
+                                            'task_id': self.task_id.id,
+                                            'uom_id': material.uom_id.id,
+                                            'estimated_qty': material.qty
+                                             })
         if self.task_id:
             self.task_id.write({'labor_budget': self.labor_total,
                                 'equipment_budget': self.equipment_total,
