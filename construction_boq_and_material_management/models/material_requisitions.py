@@ -2,6 +2,7 @@
 
 from odoo import fields, models, api, _
 from datetime import datetime
+from odoo.exceptions import UserError
 
 
 class SkitMaterialReq(models.Model):
@@ -138,6 +139,9 @@ class SkitMaterialReq(models.Model):
     @api.multi
     def mr_action_cancel(self):
         user = self.env['res.users'].browse(self.env.uid)
+        if self.picking_id.state == 'done':
+            raise UserError(_("Material Request can't be cancelled for validated Delivery Document."))
+        self.picking_id.action_cancel()
         return self.write({'state': 'cancelled',
                            'cancelled_by': user.name,
                            'cancelled_date': datetime.today()})
@@ -262,30 +266,106 @@ class SkitMaterialReqNonBOM(models.Model):
                              index=True, track_visibility='onchange', default='draft')
     operation_id = fields.Many2one('stock.picking.type',
                                    "Stock Picking Operation")
-    company_id = fields.Many2one('res.company', required=True)
+    company_id = fields.Many2one('res.company', required=True,
+                                 default=lambda self: self.env['res.company']._company_default_get('material.requisition.nonbom'))
     analytic_account_id = fields.Many2one('account.analytic.account', 'Analytic Account')
     notes = fields.Text("Notes")
     mr_material_nonbom_ids = fields.One2many('mr.nonbom.material', 'mr_nonbom_id',
                                              "Material")
+    company_count = fields.Integer("Company Count", 
+                                   compute="_get_company_count")
+    submitted_by = fields.Char("Submitted By", readonly=True)
+    confirmed_by = fields.Char("Confirmed By", readonly=True)
+    cancelled_by = fields.Char("Cancelled By", readonly=True)
+    verified_by = fields.Char("Verified By", readonly=True)
+    approved_by = fields.Char("Approved By", readonly=True)
+    submitted_date = fields.Datetime("Submitted Date", readonly=True)
+    confirmed_date = fields.Datetime("Confirmed Date", readonly=True)
+    cancelled_date = fields.Datetime("Cancelled Date", readonly=True)
+    verified_date = fields.Datetime("Verified Date", readonly=True)
+    approved_date = fields.Datetime("Approved Date", readonly=True)
+    picking_id = fields.Many2one('stock.picking', 'Delivery Document')
+    picking_state = fields.Selection([
+        ('draft', 'Draft'),
+        ('waiting', 'Waiting Another Operation'),
+        ('confirmed', 'Waiting'),
+        ('assigned', 'Ready'),
+        ('done', 'Done'),
+        ('cancel', 'Cancelled'),
+    ], string='Delivery Status', compute='_compute_state',
+        copy=False, index=True, readonly=True, store=True, track_visibility='onchange')
+
+    @api.depends('picking_id.state')
+    def _compute_state(self):
+        for boq in self:
+            self.update({'picking_state': boq.picking_id.state})
+
+    @api.depends('date')
+    def _get_company_count(self):
+        user = self.env['res.users'].browse(self.env.uid)
+        company_count = len(user.company_ids)
+        self.update({'company_count': company_count})
 
     @api.multi
     def mr_nonbom_action_submit(self):
-        self.write({'state': 'confirmed'})
+        user = self.env['res.users'].browse(self.env.uid)
+        self.write({'state': 'confirmed',
+                    'submitted_by': user.name,
+                    'submitted_date': datetime.today(),
+                    'confirmed_by': user.name,
+                    'confirmed_date': datetime.today()})
         if self.name == 'New':
             val = self.env['ir.sequence'].next_by_code('material.requisition.nonbom')
             self.write({'name': val})
 
     @api.multi
     def mr_nonbom_action_verify(self):
-        return self.write({'state': 'verified'})
+        user = self.env['res.users'].browse(self.env.uid)
+        return self.write({'state': 'verified',
+                           'verified_by': user.name,
+                           'verified_date': datetime.today()})
 
     @api.multi
     def mr_nonbom_action_approve(self):
-        self.write({'state': 'approved'})
+        user = self.env['res.users'].browse(self.env.uid)
+        stock_picking = self.env['stock.picking']
+        stock_move = self.env['stock.move']
+        res_user = self.env['res.users'].sudo().search([('id', '=', self.env.uid)])
+        stock_warehouse = self.env['stock.warehouse'].sudo().search([
+            ('company_id', '=', res_user.company_id.id)], limit=1)
+        picking = stock_picking.create({
+            'picking_type_id': self.operation_id.id,
+            'location_id': stock_warehouse.lot_stock_id.id,
+            'location_dest_id': self.operation_id.default_location_dest_id.id,
+            'mr_nonbom_id': self.id,
+            'origin': self.name
+            })
+
+        for mr_material_nonbom in self.mr_material_nonbom_ids:
+            stock_move.create({'name': _('New Move:') + mr_material_nonbom.product_id.display_name,
+                               'product_id': mr_material_nonbom.product_id.id,
+                               'product_uom_qty': mr_material_nonbom.mr_qty,
+                               'product_uom': mr_material_nonbom.product_id.uom_id.id,
+                               'picking_id': picking.id,
+                               'location_id': picking.location_id.id,
+                               'location_dest_id': picking.location_dest_id.id,
+                               })
+        picking.action_confirm()
+        picking.action_assign()
+        self.write({'state': 'approved',
+                    'approved_by': user.name,
+                    'approved_date': datetime.today(),
+                    'picking_id': picking.id})
 
     @api.multi
     def mr_nonbom_action_cancel(self):
-        return self.write({'state': 'cancelled'})
+        user = self.env['res.users'].browse(self.env.uid)
+        if self.picking_id.state == 'done':
+            raise UserError(_("Material Request can't be cancelled for validated Delivery Document."))
+        self.picking_id.action_cancel()
+        return self.write({'state': 'cancelled',
+                           'cancelled_by': user.name,
+                           'cancelled_date': datetime.today()})
 
     @api.multi
     def mr_nonbom_action_draft(self):
@@ -312,3 +392,4 @@ class SkitStockPicking(models.Model):
     _inherit = 'stock.picking'
 
     mr_bom_id = fields.Many2one('material.requisition.bom', "BOM")
+    mr_nonbom_id = fields.Many2one('material.requisition.nonbom', "BOM")

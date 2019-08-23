@@ -28,37 +28,21 @@ class ProjectUsedQuantity(models.Model):
         for scraps in scrap_product:
             scrap += scraps.qty
         available_qty = received_qty - (self.quantity + waste_qty + scrap)
-        self.material_id.write({'used_qty': self.quantity,
+        self.material_id.write({'used_qty': self.material_id.used_qty + self.quantity,
                                 'available_stock': available_qty,
                                 'consumption_progress': self.quantity})
         from_loc = self.material_id.task_id.stock_location_id.id
-        to_loc = self.material_id.task_id.picking_type_id.default_location_dest_id.id
-        stock_picking = self.env['stock.picking'].search([
-            ('material_id', '=', self.material_id.id)])
-        stock_move = self.env['stock.move'].search([
-            ('picking_id', '=', stock_picking.id)])
-        if stock_picking:
-            stock_picking.update({
+        stock_picking = self.env['stock.picking']
+        stock_warehouse = self.env['stock.warehouse'].sudo().search([
+            ('company_id', '=', self.material_id.task_id.company_id.id)], limit=1)
+        stock_move = self.env['stock.move']
+        picking = stock_picking.create({
                 'picking_type_id': self.material_id.task_id.picking_type_id.id,
                 'location_id': from_loc,
-                'location_dest_id': to_loc,
-                                            })
-            if stock_move:
-                stock_move.update({
-                    'product_id': self.material_id.product_id.id,
-                    'product_uom_qty': self.quantity,
-                    'product_uom': self.material_id.product_id.uom_id.id,
-                    'location_id': stock_picking.location_id.id,
-                    'location_dest_id': stock_picking.location_dest_id.id,
-                })
-        else:
-            picking = stock_picking.create({
-                'picking_type_id': self.material_id.task_id.picking_type_id.id,
-                'location_id': from_loc,
-                'location_dest_id': to_loc,
+                'location_dest_id': stock_warehouse.lot_stock_id.id,
                 'material_id': self.material_id.id
                                             })
-            stock_move.create({
+        stock_move.create({
                 'name': _('New Move:') + self.material_id.product_id.display_name,
                 'product_id': self.material_id.product_id.id,
                 'product_uom_qty': self.quantity,
@@ -67,6 +51,11 @@ class ProjectUsedQuantity(models.Model):
                 'location_id': picking.location_id.id,
                 'location_dest_id': picking.location_dest_id.id,
             })
+        picking.action_confirm()
+        picking.action_assign()
+        for pack_operation in picking.move_lines:
+            pack_operation.quantity_done = pack_operation.product_uom_qty
+        picking.button_validate()
 
 
 class ProjectWasteProcess(models.Model):
@@ -136,6 +125,11 @@ class ProjectWasteProcess(models.Model):
                     'location_id': picking.location_id.id,
                     'location_dest_id': picking.location_dest_id.id,
                 })
+            picking.action_confirm()
+            picking.action_assign()
+            for pack_operation in picking.move_lines:
+                pack_operation.quantity_done = pack_operation.product_uom_qty
+            picking.button_validate()
 
 
 class ProjectScrapMove(models.Model):
@@ -191,6 +185,11 @@ class ProjectScrapMove(models.Model):
                 'location_id': picking.location_id.id,
                 'location_dest_id': picking.location_dest_id.id,
             })
+        picking.action_confirm()
+        picking.action_assign()
+        for pack_operation in picking.move_lines:
+            pack_operation.quantity_done = pack_operation.product_uom_qty
+        picking.button_validate()
 
 
 class SkitStockPicking(models.Model):

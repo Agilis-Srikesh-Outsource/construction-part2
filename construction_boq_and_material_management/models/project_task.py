@@ -19,7 +19,7 @@ class ProjectTask(models.Model):
         'project.scrap.products', 'task_id', 'Scrap Products',
         copy=True, readonly=True)
     boq_id = fields.Many2one('project.boq', 'BOM/BOQ Reference',
-                             domain="[('state', '=', 'approved')]")
+                             readonly=True)
     phase_id = fields.Many2one('project.phase', string="Project Phase",
                                domain="[('project_id', '=', project_id)]")
     stock_location_id = fields.Many2one('stock.location',
@@ -74,12 +74,15 @@ class ProjectMaterialConsumption(models.Model):
             product = material.product_id.id
             material_request = self.env['material.requisition.bom'].search([
                 ('task_id', '=', material.task_id.id)])
+            qty = 0
             for mr_val in material_request:
                 location_id = mr_val.picking_id.location_dest_id.id
-                quant = self.env['stock.quant'].search([
-                    ('location_id', '=', location_id),
+                move = self.env['stock.move'].search([
+                    ('picking_id', '=', mr_val.picking_id.id),
                     ('product_id', '=', product)])
-                material.update({'tot_stock_received': quant.quantity})
+                for vals in move:
+                    qty += vals.quantity_done
+                material.update({'tot_stock_received': qty})
 
     @api.depends('tot_stock_received')
     def _compute_tot_stock(self):
@@ -117,7 +120,6 @@ class ProjectMaterialConsumption(models.Model):
                 'target': 'new',
                 'context': {
                     'default_product_id': self.product_id.id,
-                    'default_quantity': self.used_qty,
                     'default_material_id': self.id,
                     'task_id': self.task_id.id,
                     'received': self.tot_stock_received

@@ -61,7 +61,11 @@ class SkitProjectBOQ(models.Model):
     verified_date = fields.Datetime("Verified Date", readonly=True)
     approved_date = fields.Datetime("Approved Date", readonly=True)
     change_order_count = fields.Integer(string='# of Change Order',
+                                        compute="_get_project_eco",
                                         readonly=True)
+    project_eco_ids = fields.Many2many("project.eco", string='ECO',
+                                       compute="_get_project_eco",
+                                       readonly=True, copy=False)
     boq_material_ids = fields.One2many('boq.material', 'boq_id',
                                        string='Materials')
     boq_equipment_ids = fields.One2many('boq.equipment', 'boq_id',
@@ -71,6 +75,16 @@ class SkitProjectBOQ(models.Model):
     boq_labor_ids = fields.One2many('boq.labor', 'boq_id', string="Labor")
     boq_overhead_ids = fields.One2many('boq.overhead', 'boq_id',
                                        string="OverHead")
+
+    @api.one
+    @api.depends('state')
+    def _get_project_eco(self):
+        for boq in self:
+            project_eco_ids = self.env['project.eco'].sudo().search([('boq_id', '=', boq.id)])
+            boq.update({
+                'change_order_count': len(set(project_eco_ids.ids)),
+                'project_eco_ids': project_eco_ids.ids
+            })
 
     @api.one
     @api.depends('boq_material_ids')
@@ -146,7 +160,16 @@ class SkitProjectBOQ(models.Model):
 
     @api.multi
     def action_view_change_order(self):
-        return True
+        project_eco = self.mapped('project_eco_ids')
+        action = self.env.ref('construction_boq_and_material_management.open_view_project_eco').read()[0]
+        if len(project_eco) > 1:
+            action['domain'] = [('id', 'in', project_eco.ids)]
+        elif len(project_eco) == 1:
+            action['views'] = [(self.env.ref('construction_boq_and_material_management.project_eco_view_form').id, 'form')]
+            action['res_id'] = project_eco.ids[0]
+        else:
+            action = {'type': 'ir.actions.act_window_close'}
+        return action
 
     @api.multi
     def write(self, values):
@@ -189,20 +212,39 @@ class SkitProjectBOQ(models.Model):
         self.write({'state': 'approved',
                     'approved_by': user.name,
                     'approved_date': datetime.today()})
+        ids = []
         for material in self.boq_material_ids:
-            self.task_id.material_consumption.create({
-                                        'product_id': material.product_id.id,
-                                        'task_id': self.task_id.id,
-                                        'uom_id': material.uom_id.id,
-                                        'estimated_qty': material.qty
-                                         })
+            if self.task_id.material_consumption:
+                for vals in self.task_id.material_consumption.filtered(lambda l: l.product_id.id == material.product_id.id):
+                    ids.append(vals.product_id.id)
+                    vals.write({
+                                'product_id': material.product_id.id,
+                                'task_id': self.task_id.id,
+                                'uom_id': material.uom_id.id,
+                                'estimated_qty': material.qty
+                                })
+                if material.product_id.id not in ids:
+                    self.task_id.material_consumption.create({
+                                            'product_id': material.product_id.id,
+                                            'task_id': self.task_id.id,
+                                            'uom_id': material.uom_id.id,
+                                            'estimated_qty': material.qty
+                                             })
+            else:
+                self.task_id.material_consumption.create({
+                                            'product_id': material.product_id.id,
+                                            'task_id': self.task_id.id,
+                                            'uom_id': material.uom_id.id,
+                                            'estimated_qty': material.qty
+                                             })
         if self.task_id:
             self.task_id.write({'labor_budget': self.labor_total,
                                 'equipment_budget': self.equipment_total,
                                 'service_budget': self.scservice_total,
                                 'material_budget': self.material_total,
                                 'overhead_budget': self.overheadothers_total,
-                                'total_budget': self.total_boq})
+                                'total_budget': self.total_boq,
+                                'boq_id': self.id})
 
     @api.multi
     def boq_action_cancel(self):
@@ -221,6 +263,7 @@ class SkitProjectBOQ(models.Model):
 
 class SkitMaterial(models.Model):
     _name = 'boq.material'
+    _rec_name = 'product_id'
 
     product_id = fields.Many2one('product.product', string="Name",
                                  domain=[('type', '=', ('product'))])
@@ -281,6 +324,7 @@ class SkitEquipment(models.Model):
 
 class SkitSubContractorService(models.Model):
     _name = 'boq.scservice'
+    _rec_name = 'product_id'
 
     product_id = fields.Many2one('product.product', string="Name",
                            domain=[('type', '=', ('service'))])
@@ -313,6 +357,7 @@ class SkitSubContractorService(models.Model):
 
 class SkitLabor(models.Model):
     _name = 'boq.labor'
+    _rec_name = 'job_id'
 
     job_id = fields.Many2one('hr.job', string='Name')
     description = fields.Char(string='Description')

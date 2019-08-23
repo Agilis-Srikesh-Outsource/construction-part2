@@ -6,6 +6,7 @@ Created on 6 Aug 2019
 @author: Srikesh Infotech
 '''
 from odoo import api, fields, models
+from datetime import datetime
 
 
 class ProjectVisualInspection(models.Model):
@@ -17,6 +18,28 @@ class ProjectVisualInspection(models.Model):
     actual_accomplishment = fields.Float(string='Actual Accomplishment',
                                          required=True)
     task_id = fields.Many2one('project.task', 'Task')
+
+    @api.multi
+    @api.onchange('date', 'task_id')
+    def _check_unique_date(self):
+        if not self.date:
+            return
+        rest_of_vals = self.task_id.visual_inspection - self
+        for record in rest_of_vals:
+            previous_date = datetime.strptime(record.date, '%Y-%m-%d')
+            current_date = datetime.strptime(self.date, '%Y-%m-%d')
+            p_date = self.trunc_datetime((previous_date))
+            c_date = self.trunc_datetime((current_date))
+            if p_date == c_date and record.task_id.id == self.task_id.id:
+                return {
+                     'warning': {'title': 'Error!', 'message': 'Actual Accomplishment should not be more than one time for same period.'},
+                     'value': {
+                                 'date': None,
+                            }
+                }
+
+    def trunc_datetime(self, date):
+        return date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
     @api.multi
     def document_attach(self):
@@ -66,7 +89,8 @@ class ProjectTask(models.Model):
                 visual_size = len(ids.visual_inspection) - 1
                 for visual in ids.visual_inspection[visual_size]:
                     actual_accomplishment += visual.actual_accomplishment
-                    ids.update({'actual_accomplishment': actual_accomplishment})
+                    ids.update({'actual_accomplishment': actual_accomplishment
+                                })
 
 
 class DocumentsAttach(models.Model):
