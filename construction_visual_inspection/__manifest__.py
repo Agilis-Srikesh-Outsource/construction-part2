@@ -11,6 +11,7 @@
         Visual Inspection module''',
     'summary': 'Visual Inspection Management',
     'data': [
+        'security/ir.model.access.csv',
         'views/visual_inspection.xml',
         ],
     'depends': [

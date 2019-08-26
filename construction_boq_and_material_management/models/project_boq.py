@@ -132,7 +132,7 @@ class SkitProjectBOQ(models.Model):
             ids.update({'overheadothers_total': overhead_total})
 
     @api.one
-    @api.depends('total_boq')
+    @api.depends('labor_total', 'equipment_total', 'scservice_total', 'material_total', 'overheadothers_total')
     def _compute_tot_boq(self):
         for ids in self:
             tot_val = (ids.labor_total+ids.equipment_total+ids.scservice_total+ids.material_total+ids.overheadothers_total)

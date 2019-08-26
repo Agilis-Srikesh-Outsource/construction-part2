@@ -11,6 +11,7 @@
     'description': '''
         Construction Project Management''',
     'data': [
+        'security/ir.model.access.csv',
         'views/project_boq.xml',
         'views/project.xml',
         'wizard/project_wizard.xml',
@@ -22,7 +23,8 @@
     'depends': [
             'project',
             'construction_project_management_base',
-            'hr'
+            'hr',
+            'web_kanban_graph'
         ],
     'installable': True,
     'auto_install': False,

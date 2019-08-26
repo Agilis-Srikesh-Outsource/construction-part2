@@ -73,7 +73,7 @@ class ProjectMaterialConsumption(models.Model):
         for material in self:
             product = material.product_id.id
             material_request = self.env['material.requisition.bom'].search([
-                ('task_id', '=', material.task_id.id)])
+                ('task_id', '=', material.task_id.id), ('state', '=', 'approved')])
             qty = 0
             for mr_val in material_request:
                 location_id = mr_val.picking_id.location_dest_id.id
