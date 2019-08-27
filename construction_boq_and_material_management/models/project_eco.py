@@ -163,7 +163,7 @@ class SkitProjectECO(models.Model):
                         'overhead_budget': overhead_budget})
 
     @api.one
-    @api.depends('total_previous', 'total_current', 'total_budget')
+    @api.depends('eco_equipment_ids')
     def _compute_eco_total(self):
         for tid in self:
             total_previous = (tid.labor_previous + tid.equipment_previous + tid.service_previous + tid.material_previous + tid.overhead_previous)
