@@ -90,7 +90,7 @@ class SkitProjectECO(models.Model):
         material_budget = 0
         for mid in self:
             for material in mid.eco_material_ids:
-                material_current = material_current + material.subtotal
+                material_current = material_current + material.boq_equipment_budget_diff
             for boq in mid.boq_id:
                 material_previous = material_previous + boq.material_total
             material_budget = material_previous + material_current
@@ -106,7 +106,7 @@ class SkitProjectECO(models.Model):
         service_budget = 0
         for sid in self:
             for service in sid.eco_scservice_ids:
-                service_current = service_current + service.subtotal
+                service_current = service_current + service.boq_equipment_budget
             for boq in sid.boq_id:
                 service_previous = service_previous + boq.scservice_total
             service_budget = service_previous + service_current
@@ -122,7 +122,7 @@ class SkitProjectECO(models.Model):
         labor_budget = 0
         for lid in self:
             for labor in lid.eco_labor_ids:
-                labor_current = labor_current + labor.total
+                labor_current = labor_current + labor.boq_equipment_budget
             for boq in lid.boq_id:
                 labor_previous = labor_previous + boq.labor_total
             labor_budget = labor_previous + labor_current
@@ -138,7 +138,7 @@ class SkitProjectECO(models.Model):
         equipment_budget = 0
         for eid in self:
             for equipment in eid.eco_equipment_ids:
-                equipment_current = equipment_current + equipment.subtotal
+                equipment_current = equipment_current + equipment.boq_equipment_budget
             for boq in eid.boq_id:
                 equipment_previous = equipment_previous + boq.equipment_total
             equipment_budget = equipment_previous + equipment_current
@@ -154,7 +154,7 @@ class SkitProjectECO(models.Model):
         overhead_budget = 0
         for oid in self:
             for overhead in oid.eco_overhead_ids:
-                overhead_current = overhead_current + overhead.subtotal
+                overhead_current = overhead_current + overhead.boq_equipment_budget
             for boq in oid.boq_id:
                 overhead_previous = overhead_previous + boq.overheadothers_total
             overhead_budget = overhead_previous + overhead_current
