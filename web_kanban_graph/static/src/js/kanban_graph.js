@@ -8,7 +8,7 @@ odoo.define('web_kanban_graph.widget', function (require) {
  * Bar Chart
  */
 var KanbanGraphWidget = AbstractField.extend({
-    className: "o_kanban_graph",
+    className: "o_kanban_bar_graph",
     cssLibs: [
         '/web/static/lib/nvd3/nv.d3.css'
     ],
@@ -61,7 +61,7 @@ var KanbanGraphWidget = AbstractField.extend({
             .color(['#0039e6', '#ff3333', '#FA8072']);
                 
         chart.options({
-          margin: {left: 60, bottom: 50, top: 10, right: 0},
+          margin: {left: 83, bottom: 50, top: 10, right: 0},
           delay: 100,
           transition: 10,
           showLegend: true,
@@ -73,7 +73,7 @@ var KanbanGraphWidget = AbstractField.extend({
           rotateLabels: -20,
           showControls: false
         });
-           
+        chart.yAxis.tickFormat(d3.format('.2f')); 
         d3.select(self.svg)
                 .datum(data)
                 .call(chart);
@@ -149,11 +149,12 @@ var KanbanLineGraphWidget = AbstractField.extend({
 	          useInteractiveGuideline: true,
 	          showLegend: true,
 	          showXAxis: true,
-	          showYAxis: true,
+	          showYAxis: true
 	        });
             
             chart.xAxis.tickValues(tickValues)
-            .tickFormat(tickFormat);
+            .tickFormat(tickFormat)
+            .rotateLabels(-20);
             chart.yAxis.tickFormat(d3.format('.2%'));
         
             d3.select(self.svg)

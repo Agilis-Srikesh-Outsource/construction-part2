@@ -44,10 +44,16 @@
 			<field name="arch" type="xml">
 				<tree string="Waste Management">
 					<field name="product_id"></field>
+					<field name="new_product_id"></field>
 					<field name="uom_id"></field>
 					<field name="qty"></field>
 					<field name="wastage_percent"></field>
 					<field name="date_recorded"></field>
+					<field name="material_waste"></field>
+					<field name="waste_location_id"></field>
+					<field name="description"></field>
+					<field name="cutted_portion"></field>
+					<field name="cutted_qty"></field>
 				</tree>
 			</field>
 		</record>
@@ -59,10 +65,16 @@
 				<form string="Material Consumption">
 					<group>
 						<field name="product_id"></field>
-					<field name="uom_id"></field>
-					<field name="qty"></field>
-					<field name="wastage_percent"></field>
-					<field name="date_recorded"></field>
+						<field name="new_product_id"></field>
+						<field name="uom_id"></field>
+						<field name="qty"></field>
+						<field name="wastage_percent"></field>
+						<field name="date_recorded"></field>
+						<field name="material_waste"></field>
+						<field name="waste_location_id"></field>
+						<field name="description"></field>
+						<field name="cutted_portion"></field>
+						<field name="cutted_qty"></field>
 					</group>
 				</form>
 			</field>
@@ -79,6 +91,7 @@
 					<field name="scrap_percent"></field>
 					<field name="scrap_reason"></field>
 					<field name="date_recorded"></field>
+					<field name="scrap_location_id"></field>
 				</tree>
 			</field>
 		</record>
@@ -95,6 +108,7 @@
 						<field name="scrap_percent"></field>
 						<field name="scrap_reason"></field>
 						<field name="date_recorded"></field>
+						<field name="scrap_location_id"></field>
 					</group>
 				</form>
 			</field>

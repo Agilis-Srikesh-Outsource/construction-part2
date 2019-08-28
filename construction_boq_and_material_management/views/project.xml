@@ -21,7 +21,7 @@
 		                 <field name="kanban_dashboard_line_graph" widget="kanban_line_graph"/>
 		            </t>
 		        </xpath>
-	            <xpath expr="//div[contains(@class, 'o_project_kanban_boxes')]" position="after">
+	            <xpath expr="//div[contains(@class, 'o_project_kanban_boxes')]" position="before">
 	                <div class="outerDiv">
 						<div class="leftDiv">
 							<t t-call="ProjectBodyBarGraph" />

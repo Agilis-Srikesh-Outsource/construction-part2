@@ -12,6 +12,7 @@ from datetime import datetime
 class ProjectVisualInspection(models.Model):
     _name = 'project.visual.inspection'
     _description = "Visual Inspection"
+    _order = 'date desc'
 
     date = fields.Date(string='Date', required=True)
     description = fields.Text(string='Description', required=True)
@@ -84,12 +85,22 @@ class ProjectTask(models.Model):
     @api.depends('visual_inspection.actual_accomplishment')
     def update_actual_accomplishment(self):
         actual_accomplishment = 0
+        maxdate = '0000-00-00'
         for ids in self:
-            if ids.visual_inspection:
-                visual_size = len(ids.visual_inspection) - 1
-                for visual in ids.visual_inspection[visual_size]:
-                    actual_accomplishment += visual.actual_accomplishment
-                    ids.update({'actual_accomplishment': actual_accomplishment
+            #===================================================================
+            # if ids.visual_inspection:
+            #     visual_size = len(ids.visual_inspection) - 1
+            #===================================================================
+            vals = []
+            for visual in ids.visual_inspection:
+                maxdate = max(visual.date, maxdate)
+                vals.append({'date': visual.date,
+                             'id': visual.id,
+                             'value': visual.actual_accomplishment})
+                actual_accomplishment += visual.actual_accomplishment
+            for val in vals:
+                if val.get('date') == maxdate:
+                    ids.update({'actual_accomplishment': val.get('value')
                                 })
 
 
