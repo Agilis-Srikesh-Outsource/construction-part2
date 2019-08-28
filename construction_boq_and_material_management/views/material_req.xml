@@ -40,7 +40,7 @@
 				       			type="object" attrs="{'invisible': [('state', 'not in', ['draft'])]}"/>
 				        <button name ="mr_action_verify" string="Verify" class="oe_highlight" states="confirmed" type="object"/>
 				        <button name="mr_action_approve" string="Approve" class="oe_highlight" states="verified" type="object"/>
-				        <button name ="mr_action_cancel" states="draft,confirmed,verified,approved" string="Cancel"  type="object"/>
+				        <button name ="mr_action_cancel" states="draft,confirmed,verified" string="Cancel"  type="object"/>
 				        <button name="mr_action_draft" states="cancelled" type="object" string="Set to MR"/>
 				        <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,verified,approved" 
 				           	statusbar_colors="{'KEY_IS_STATE':'VALUE_IS_COLOR'}"/>
@@ -177,7 +177,7 @@
 				       			type="object" attrs="{'invisible': [('state', 'not in', ['draft'])]}"/>
 				        <button name ="mr_nonbom_action_verify" string="Verify" class="oe_highlight" states="confirmed" type="object"/>
 				        <button name="mr_nonbom_action_approve" string="Approve" class="oe_highlight" states="verified" type="object"/>
-				        <button name ="mr_nonbom_action_cancel" states="draft,confirmed,verified,approved" string="Cancel"  type="object"/>
+				        <button name ="mr_nonbom_action_cancel" states="draft,confirmed,verified" string="Cancel"  type="object"/>
 				        <button name="mr_nonbom_action_draft" states="cancelled" type="object" string="Set to MR"/>
 				        <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,verified,approved" 
 				           	statusbar_colors="{'KEY_IS_STATE':'VALUE_IS_COLOR'}"/>
@@ -214,8 +214,8 @@
 					            				<field name="uom_id"/>
 					            			</group>
 					            			<group>
-					            				<field name="exceeded_qty"/>
-					            				<field name="not_task_bom"/>
+					            				<field name="exceeded_qty" invisible="1"/>
+					            				<field name="not_task_bom" invisible="1"/>
 					            			</group>
 					            		</group>
 					            	</form>	
@@ -223,8 +223,8 @@
 					            		<field name="product_id"/>
 					            		<field name="mr_qty"/>
 					            		<field name="uom_id"/>
-					            		<field name="exceeded_qty"/>
-					            		<field name="not_task_bom"/>
+					            		<field name="exceeded_qty" invisible="1"/>
+					            		<field name="not_task_bom" invisible="1"/>
 					            	</tree>		
 					            </field>
 					            <group string="Notes">

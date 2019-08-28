@@ -8,7 +8,8 @@ class ProjectTask(models.Model):
     _inherit = 'project.task'
 
     qty = fields.Float(string="Quantity")
-    material_consumption_progress = fields.Float(string="Material Consumption Progress")
+    material_consumption_progress = fields.Float(string="Material Consumption Progress",
+                                                 compute="get_material_consumption")
     material_consumption = fields.One2many(
         'project.material.consumption', 'task_id', 'Material Consumption',
         copy=True)
@@ -25,6 +26,22 @@ class ProjectTask(models.Model):
     stock_location_id = fields.Many2one('stock.location',
                                         string="Task Inventory Location",
                                         domain="[('location_id', '=', project_stock_location_id),('usage', '!=', 'view')]")
+    material_budget = fields.Float(string="Material Budget", readonly=True)
+    service_budget = fields.Float(string="Service Budget", readonly=True)
+    labor_budget = fields.Float(string="Labor Budget", readonly=True)
+    equipment_budget = fields.Float(string="Equipment Budget", readonly=True)
+    overhead_budget = fields.Float(string="Overhead Budget", readonly=True)
+    total_budget = fields.Float(string="Total Budget", readonly=True)
+
+    @api.depends('material_consumption')
+    def get_material_consumption(self):
+        for ids in self:
+            consumption = progress = 0
+            if ids.material_consumption:
+                for material in ids.material_consumption:
+                    consumption += material.consumption_progress
+                progress = consumption / len(ids.material_consumption)
+            ids.update({'material_consumption_progress': progress})
 
 
 class ProjectMaterialConsumption(models.Model):
@@ -39,12 +56,26 @@ class ProjectMaterialConsumption(models.Model):
     used_qty = fields.Float(string='Used Quantity', readonly=True)
     available_stock = fields.Float(string='Available Stock',
                                    compute='_compute_tot_stock', readonly=True)
-    consumption_progress = fields.Float(string="Consumption Progress")
-    wastage_percent = fields.Float(string="Wastage Percentage",
+    consumption_progress = fields.Float(string="Consumption",
+                                        compute='get_consumption_progress')
+    wastage_percent = fields.Float(string="Wastage",
                                    compute='_compute_waste_percent')
-    scrap_percent = fields.Float(string="Scrap Percentage",
+    scrap_percent = fields.Float(string="Scrapped",
                                  compute='_compute_scrap_percent')
     task_id = fields.Many2one('project.task', 'Task')
+
+    @api.depends('used_qty', 'tot_stock_received', 'scrap_percent')
+    def get_consumption_progress(self):
+        for ids in self:
+            if ids.used_qty or ids.scrap_percent or ids.tot_stock_received:
+                scrap_product = self.env['project.scrap.products'].search([
+                    ('task_id', '=', ids.task_id.id),
+                    ('product_id', '=', ids.product_id.id)])
+                qty = 0
+                for scrap in scrap_product:
+                    qty += scrap.qty
+                consumption = ((ids.used_qty + qty) / ids.tot_stock_received * 100)
+                ids.update({'consumption_progress': consumption})
 
     @api.depends('task_id')
     def _compute_waste_percent(self):
@@ -52,10 +83,16 @@ class ProjectMaterialConsumption(models.Model):
             waste_mgmt = self.env['project.waste.management'].search([
                 ('task_id', '=', material.task_id.id),
                 ('product_id', '=', material.product_id.id)])
-            qty = 0
-            for waste in waste_mgmt:
-                qty += waste.qty
-                material.update({'wastage_percent': qty})
+            waste_percent = 0
+            if waste_mgmt:
+                qty = received = 0
+                for waste in waste_mgmt:
+                    qty += waste.qty
+                if material.tot_stock_received:
+                    received = material.tot_stock_received
+                if qty and received != 0:
+                    waste_percent = qty / received * 100
+            material.update({'wastage_percent': waste_percent})
 
     @api.depends('task_id')
     def _compute_scrap_percent(self):
@@ -63,10 +100,16 @@ class ProjectMaterialConsumption(models.Model):
             scrap_product = self.env['project.scrap.products'].search([
                 ('task_id', '=', material.task_id.id),
                 ('product_id', '=', material.product_id.id)])
-            qty = 0
-            for scrap in scrap_product:
-                qty += scrap.qty
-                material.update({'scrap_percent': qty})
+            scrap_percent = 0
+            if scrap_product:
+                qty = received = 0
+                for scrap in scrap_product:
+                    qty += scrap.qty
+                if material.tot_stock_received:
+                    received = material.tot_stock_received
+                if qty and received != 0:
+                    scrap_percent = qty / received * 100
+            material.update({'scrap_percent': scrap_percent})
 
     @api.depends('task_id.stock_location_id')
     def _update_tot_stock(self):
@@ -175,6 +218,19 @@ class ProjectWasteManagement(models.Model):
     date_recorded = fields.Date(string='Date Recorded')
     task_id = fields.Many2one('project.task', 'Task')
     is_cutted = fields.Boolean(string="Is Cutted", default=False)
+    new_product_id = fields.Many2one('product.product', string="New Product")
+    material_waste = fields.Selection([
+        ('whole', 'Whole Material Waste'),
+        ('cutted', 'Is there a Cutted/Portion Material Waste')],
+                                      string='Material Waste',
+                                      track_visibility='onchange',
+                                      default='whole')
+    waste_location_id = fields.Many2one('stock.location',
+                                        string="Waste Location",
+                                        )
+    description = fields.Text(string='Description')
+    cutted_portion = fields.Float(string='Cutted Portion')
+    cutted_qty = fields.Float(string='')
 
 
 class ProjectScrapProducts(models.Model):
@@ -189,3 +245,5 @@ class ProjectScrapProducts(models.Model):
     date_recorded = fields.Date(string='Date Recorded',
                                 default=fields.Date.context_today)
     task_id = fields.Many2one('project.task', 'Task')
+    scrap_location_id = fields.Many2one('stock.location',
+                                        string="Scrap Location")

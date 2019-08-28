@@ -180,10 +180,10 @@
 									</tr>
 								</table>
 							</group>
-							<group string="Misc.Details">
+							<!-- <group string="Misc.Details">
 								<field name="labor_cost" readonly="1" attrs="{'readonly': [('state', '=', ('cancelled'))]}"/>
 					           	<field name="markup_cost" readonly="1" attrs="{'readonly': [('state', '=', ('cancelled'))]}"/>
-							</group>
+							</group> -->
 			            </group>
 			            <notebook>
 			            	<page string="Materials">
@@ -192,17 +192,17 @@
 					            		<tree string="Materials" editable="bottom">
 					            			<field name="eco_mode" required="1" />
 					            			<field name="boq_material_id"  options="{'no_quick_create': True, 'no_create_edit' : True}" domain="[('boq_id', '=', context.get('default_boq_id'))]" attrs="{'readonly': [('eco_mode', '!=', ('update'))],'required':[('eco_mode','!=',('new'))]}"/>
-					            			<field name="product_id"/>
+					            			<field name="product_id" attrs="{'readonly': [('eco_mode', '!=', ('new'))],'required':[('eco_mode','=',('new'))]}"/>
 					            			<field name="boq_qty" attrs="{'readonly': [('eco_mode', '!=', ('new'))],'required':[('eco_mode','=',('new'))]}"/>
 							            	<field name="qty" attrs="{'readonly': [('eco_mode', '=', ('new'))],'required':[('eco_mode','!=',('new'))]}"/>
-							            	<field name="uom_id"/>
+							            	<field name="uom_id" attrs="{'readonly': [('eco_mode', '!=', ('new'))]}"/>
 							            	<field name="boq_unit_rate" attrs="{'readonly': [('eco_mode', '!=', ('new'))],'required':[('eco_mode','=',('new'))]}"/>
-							            	<field name="unit_rate" attrs="{'readonly': [('eco_mode', '=', ('new'))],'required':[('eco_mode','!=',('new'))]}"/>
+							            	<!-- <field name="unit_rate" attrs="{'readonly': [('eco_mode', '=', ('new'))],'required':[('eco_mode','!=',('new'))]}"/> -->
 							            	<field name="boq_labor_cost" attrs="{'readonly': [('eco_mode', '!=', ('new'))],'required':[('eco_mode','=',('new'))]}"/>
 							            	<field name="labor_cost" attrs="{'readonly': [('eco_mode', '=', ('new'))],'required':[('eco_mode','!=',('new'))]}"/>
-							            	<field name="boq_equipment_budget_diff" attrs="{'readonly': [('eco_mode', '!=', ('new'))],'required':[('eco_mode','=',('new'))]}"/>
 							            	<field name="boq_equipment_budget" attrs="{'readonly': [('eco_mode', '!=', ('new'))],'required':[('eco_mode','=',('new'))]}"/>
 							            	<field name="equipment_budget" attrs="{'readonly': [('eco_mode', '=', ('new'))],'required':[('eco_mode','!=',('new'))]}"/>
+							            	<field name="boq_equipment_budget_diff" attrs="{'readonly': [('eco_mode', '!=', ('new'))],'required':[('eco_mode','=',('new'))]}"/>
 							            	<field name="subtotal"/>
 					            		</tree>
 				            		</field>
@@ -214,7 +214,7 @@
 					            		<tree string="Equipment" editable="bottom">
 					            			<field name="eco_mode" required="1" />
 					            			<field name="boq_equipment_id" options="{'no_quick_create': True, 'no_create_edit' : True}" domain="[('boq_id', '=', context.get('default_boq_id'))]" attrs="{'readonly': [('eco_mode', '!=', ('update'))],'required':[('eco_mode','!=',('new'))]}"/>
-					            			<field name="name"/>
+					            			<field name="name" attrs="{'readonly': [('eco_mode', '!=', ('new'))],'required':[('eco_mode','=',('new'))]}"/>
 					            			<field name="boq_qty" attrs="{'readonly': [('eco_mode', '!=', ('new'))],'required':[('eco_mode','=',('new'))]}"/>
 							            	<field name="qty" attrs="{'readonly': [('eco_mode', '=', ('new'))],'required':[('eco_mode','!=',('new'))]}"/>
 							            	<field name="uom_id" attrs="{'readonly': [('eco_mode', '!=', ('new'))],'required':[('eco_mode','=',('new'))]}"/>
@@ -231,7 +231,7 @@
 					            		<tree string="SubContractor Services" editable="bottom">
 					            			<field name="eco_mode" required="1" />
 					            			<field name="boq_scservice_id" options="{'no_quick_create': True, 'no_create_edit' : True}" domain="[('boq_id', '=', context.get('default_boq_id'))]" attrs="{'readonly': [('eco_mode', '!=', ('update'))],'required':[('eco_mode','!=',('new'))]}"/>
-					            			<field name="product_id"/>
+					            			<field name="product_id" attrs="{'readonly': [('eco_mode', '!=', ('new'))],'required':[('eco_mode','=',('new'))]}"/>
 					            			<field name="boq_qty" attrs="{'readonly': [('eco_mode', '!=', ('new'))],'required':[('eco_mode','=',('new'))]}"/>
 							            	<field name="qty" attrs="{'readonly': [('eco_mode', '=', ('new'))],'required':[('eco_mode','!=',('new'))]}"/>
 							            	<field name="uom_id" attrs="{'readonly': [('eco_mode', '!=', ('new'))],'required':[('eco_mode','=',('new'))]}"/>
@@ -248,12 +248,12 @@
 					            		<tree string="Labor" editable="bottom">
 					            			<field name="eco_mode" required="1" />
 					            			<field name="boq_labor_id" options="{'no_quick_create': True, 'no_create_edit' : True}" domain="[('boq_id', '=', context.get('default_boq_id'))]" attrs="{'readonly': [('eco_mode', '!=', ('update'))],'required':[('eco_mode','!=',('new'))]}"/>
-					            			<field name="job_id"/>
+					            			<field name="job_id" attrs="{'readonly': [('eco_mode', '!=', ('new'))],'required':[('eco_mode','=',('new'))]}"/>
 					            			<field name="description" />
 					            			<field name="boq_head_count" attrs="{'readonly': [('eco_mode', '!=', ('new'))],'required':[('eco_mode','=',('new'))]}"/>
 							            	<field name="head_count" attrs="{'readonly': [('eco_mode', '=', ('new'))],'required':[('eco_mode','!=',('new'))]}"/>
 							            	<field name="budget_head_count" attrs="{'readonly': [('eco_mode', '!=', ('new'))],'required':[('eco_mode','=',('new'))]}"/>
-							            	<field name="uom_id"/>
+							            	<field name="uom_id" attrs="{'readonly': [('eco_mode', '!=', ('new'))]}"/>
 							            	<field name="subtotal"/>
 							            	<field name="dur_payment_term" attrs="{'readonly': [('eco_mode', '!=', ('new'))],'required':[('eco_mode','=',('new'))]}"/>
 							            	<field name="boq_equipment_budget" attrs="{'readonly': [('eco_mode', '!=', ('new'))],'required':[('eco_mode','=',('new'))]}"/>
@@ -266,12 +266,12 @@
 					            		<tree string="Labor" editable="bottom">
 					            			<field name="eco_mode" required="1" />
 					            			<field name="boq_overhead_id" options="{'no_quick_create': True, 'no_create_edit' : True}" domain="[('boq_id', '=', context.get('default_boq_id'))]" attrs="{'readonly': [('eco_mode', '!=', ('update'))],'required':[('eco_mode','!=',('new'))]}"/>
-					            			<field name="category_id"/>
-					            			<field name="name" />
+					            			<field name="category_id" attrs="{'readonly': [('eco_mode', '!=', ('new'))],'required':[('eco_mode','=',('new'))]}"/>
+					            			<field name="name" attrs="{'readonly': [('eco_mode', '!=', ('new'))],'required':[('eco_mode','=',('new'))]}"/>
 					            			<field name="boq_qty" attrs="{'readonly': [('eco_mode', '!=', ('new'))],'required':[('eco_mode','=',('new'))]}"/>
 							            	<field name="qty" attrs="{'readonly': [('eco_mode', '=', ('new'))],'required':[('eco_mode','!=',('new'))]}"/>
 							            	<field name="uom_id" attrs="{'readonly': [('eco_mode', '!=', ('new'))],'required':[('eco_mode','=',('new'))]}"/>
-							            	<field name="unit_rate"/>
+							            	<field name="unit_rate" attrs="{'readonly': [('eco_mode', '!=', ('new'))]}"/>
 							            	<field name="boq_equipment_budget" attrs="{'readonly': [('eco_mode', '!=', ('new'))],'required':[('eco_mode','=',('new'))]}"/>
 							            	<field name="subtotal"/>
 					            		</tree>

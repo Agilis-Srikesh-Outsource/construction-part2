@@ -58,10 +58,16 @@
 						<field name="waste_management" nolabel="1" widget="one2many_list">
 							<tree string="Waste Management">
 								<field name="product_id"></field>
+								<field name="new_product_id"></field>
 								<field name="uom_id"></field>
 								<field name="qty"></field>
 								<field name="wastage_percent"></field>
 								<field name="date_recorded"></field>
+								<field name="material_waste"></field>
+								<field name="waste_location_id"></field>
+								<field name="description"></field>
+								<field name="cutted_portion"></field>
+								<field name="cutted_qty"></field>
 							</tree>
 						</field>
 					</group>

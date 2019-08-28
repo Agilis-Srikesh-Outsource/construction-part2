@@ -23,7 +23,7 @@ class SkitProjectBOQ(models.Model):
     project_id = fields.Many2one('project.project', string="Project")
     phase_id = fields.Many2one('project.phase', string="Phase",
                                domain="[('project_id', '=', project_id)]")
-    task_id = fields.Many2one('project.task', string="Task")
+    task_id = fields.Many2one('project.task', string="Task", copy=False)
     allocated_budget = fields.Integer(string="Allocated Budget", readonly=True)
     qty = fields.Float(string="Quantity", readonly=True,
                        digits=dp.get_precision('Product Price'))
@@ -50,16 +50,16 @@ class SkitProjectBOQ(models.Model):
     total_boq = fields.Float(string="Total BOQ",
                              compute='_compute_tot_boq')
     notes = fields.Text("Notes")
-    submitted_by = fields.Char("Submitted By", readonly=True)
-    confirmed_by = fields.Char("Confirmed By", readonly=True)
-    cancelled_by = fields.Char("Cancelled By", readonly=True)
-    verified_by = fields.Char("Verified By", readonly=True)
-    approved_by = fields.Char("Approved By", readonly=True)
-    submitted_date = fields.Datetime("Submitted Date", readonly=True)
-    confirmed_date = fields.Datetime("Confirmed Date", readonly=True)
-    cancelled_date = fields.Datetime("Cancelled Date", readonly=True)
-    verified_date = fields.Datetime("Verified Date", readonly=True)
-    approved_date = fields.Datetime("Approved Date", readonly=True)
+    submitted_by = fields.Char("Submitted By", readonly=True, copy=False)
+    confirmed_by = fields.Char("Confirmed By", readonly=True, copy=False)
+    cancelled_by = fields.Char("Cancelled By", readonly=True, copy=False)
+    verified_by = fields.Char("Verified By", readonly=True, copy=False)
+    approved_by = fields.Char("Approved By", readonly=True, copy=False)
+    submitted_date = fields.Datetime("Submitted Date", readonly=True, copy=False)
+    confirmed_date = fields.Datetime("Confirmed Date", readonly=True, copy=False)
+    cancelled_date = fields.Datetime("Cancelled Date", readonly=True, copy=False)
+    verified_date = fields.Datetime("Verified Date", readonly=True, copy=False)
+    approved_date = fields.Datetime("Approved Date", readonly=True, copy=False)
     change_order_count = fields.Integer(string='# of Change Order',
                                         compute="_get_project_eco",
                                         readonly=True)
@@ -213,15 +213,23 @@ class SkitProjectBOQ(models.Model):
                     'approved_by': user.name,
                     'approved_date': datetime.today()})
         ids = []
-        for material in self.boq_material_ids:
+        qty = 0
+        new_product_id = 0
+        for material in (sorted(self.boq_material_ids, key=lambda k: k.product_id.id)):
+            if(new_product_id == 0):
+                new_product_id = material.product_id.id
+            if(new_product_id != material.product_id.id):
+                new_product_id = material.product_id.id
+                qty = 0
             if self.task_id.material_consumption:
                 for vals in self.task_id.material_consumption.filtered(lambda l: l.product_id.id == material.product_id.id):
                     ids.append(vals.product_id.id)
+                    qty += material.qty
                     vals.write({
                                 'product_id': material.product_id.id,
                                 'task_id': self.task_id.id,
                                 'uom_id': material.uom_id.id,
-                                'estimated_qty': material.qty
+                                'estimated_qty': qty
                                 })
                 if material.product_id.id not in ids:
                     self.task_id.material_consumption.create({
@@ -361,8 +369,8 @@ class SkitLabor(models.Model):
 
     job_id = fields.Many2one('hr.job', string='Name')
     description = fields.Char(string='Description')
-    head_count = fields.Integer("Head Count")
-    budget_head_count = fields.Integer("Budget/Head Count")
+    head_count = fields.Integer("Headcount")
+    budget_head_count = fields.Integer("Budget/Headcount")
     uom_id = fields.Many2one('product.uom', string="UOM",
                              help="Unit of Measure")
     dur_payment_term = fields.Float("Duration of Payment Terms",

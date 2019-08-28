@@ -42,8 +42,8 @@ class Project(models.Model):
         datas = []
         for project in self.projection_accomplishment_ids:
             pdate = datetime.strptime(project.date, '%Y-%m-%d')
-            datas.append({"value": ((project.projected) / 100), "labels": [pdate.strftime("%b"),"Projected Accomplishment"]})
-            datas.append({"value": ((project.actual) / 100), "labels": [pdate.strftime("%b"),"Actual Accomplishment"]})
+            datas.append({"value": ((project.projected) / 100), "labels": [pdate.strftime("%b")+" "+pdate.strftime("%Y"),"Projected Accomplishment"]})
+            datas.append({"value": ((project.actual) / 100), "labels": [pdate.strftime("%b")+" "+pdate.strftime("%Y"),"Actual Accomplishment"]})
 
         return [{'values': datas, 'id': self.id}]
 

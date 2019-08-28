@@ -17,7 +17,7 @@ class SkitProjectECO(models.Model):
                               domain="[('project_id', '=', project_id),('phase_id', '=', phase_id)]")
     boq_id = fields.Many2one('project.boq', "BOQ",
                              domain="[('project_id', '=', project_id),('phase_id', '=', phase_id),('task_id', '=', task_id)]")
-    request_date = fields.Date("Date")
+    request_date = fields.Date("Date", default=fields.Date.context_today)
     labor_cost = fields.Float(string="Labor Cost (%)", digits=dp.get_precision('Product Price'))
     markup_cost = fields.Float(string="Markup Cost (%)", digits=dp.get_precision('Product Price'))
     state = fields.Selection([('draft', 'Draft'),
@@ -331,6 +331,41 @@ class SkitProjectECO(models.Model):
                     qty = qty - (-overhead.qty)
                 boq_overhead.update({'qty': qty})
 
+        ids = []
+        for material in self.boq_id.boq_material_ids:
+            if self.boq_id.task_id.material_consumption:
+                for vals in self.boq_id.task_id.material_consumption.filtered(lambda l: l.product_id.id == material.product_id.id):
+                    ids.append(vals.product_id.id)
+                    vals.write({
+                                'product_id': material.product_id.id,
+                                'task_id': self.boq_id.task_id.id,
+                                'uom_id': material.uom_id.id,
+                                'estimated_qty': material.qty
+                                })
+                if material.product_id.id not in ids:
+                    self.boq_id.task_id.material_consumption.create({
+                                            'product_id': material.product_id.id,
+                                            'task_id': self.boq_id.task_id.id,
+                                            'uom_id': material.uom_id.id,
+                                            'estimated_qty': material.qty
+                                             })
+            else:
+                self.boq_id.task_id.material_consumption.create({
+                                            'product_id': material.product_id.id,
+                                            'task_id': self.boq_id.task_id.id,
+                                            'uom_id': material.uom_id.id,
+                                            'estimated_qty': material.qty
+                                             })
+        if self.boq_id.task_id:
+            self.boq_id.task_id.write({
+                'labor_budget': self.boq_id.labor_total,
+                'equipment_budget': self.boq_id.equipment_total,
+                'service_budget': self.boq_id.scservice_total,
+                'material_budget': self.boq_id.material_total,
+                'overhead_budget': self.boq_id.overheadothers_total,
+                'total_budget': self.boq_id.total_boq,
+                'boq_id': self.boq_id.id})
+
     @api.multi
     def eco_action_cancel(self):
         user = self.env['res.users'].browse(self.env.uid)
@@ -360,23 +395,42 @@ class SkitECOMaterial(models.Model):
     unit_rate = fields.Float("Unit Rate (-+)")
     boq_labor_cost = fields.Float("Labor Cost")
     labor_cost = fields.Float("Labor Cost (-+)")
-    boq_equipment_budget_diff = fields.Float("Budget Difference")
+    boq_equipment_budget_diff = fields.Float("Budget Difference",
+                                             compute='_compute_eco_material_total', store=True)
     boq_equipment_budget = fields.Float("Equipment Budget")
     equipment_budget = fields.Float("Equipment Budget (-+)")
-    subtotal = fields.Float("Subtotal", compute='_compute_eco_material_total',store=True)
+    subtotal = fields.Float("Subtotal", compute='_compute_eco_material_total', store=True)
     eco_id = fields.Many2one('project.eco', string='ECO', required=True, ondelete='cascade', index=True, copy=False)
 
-    @api.depends('boq_qty', 'qty', 'boq_unit_rate', 'unit_rate', 'boq_labor_cost', 'labor_cost', 'boq_equipment_budget', 'equipment_budget')
+    @api.depends('boq_qty', 'qty', 'boq_unit_rate', 'boq_labor_cost', 'labor_cost', 'boq_equipment_budget', 'equipment_budget')
     def _compute_eco_material_total(self):
         for material in self:
-            val = ((material.boq_unit_rate+material.unit_rate) + (material.boq_labor_cost+material.labor_cost) + (material.boq_equipment_budget+material.equipment_budget))
-            qty = (material.boq_qty + material.qty)
-            subtotal = (val)*(qty)
-            material.update({'subtotal': subtotal})
+            if material.eco_mode == 'update':
+                budget_diff = (material.qty * (material.boq_unit_rate + material.labor_cost + material.equipment_budget))
+                sub_total = (material.boq_qty * (material.boq_unit_rate + material.boq_labor_cost + material.boq_equipment_budget)) + budget_diff
+                material.update({'subtotal': sub_total,
+                                 'boq_equipment_budget_diff': budget_diff})
+            else:
+                budget_diff = (material.boq_qty * (material.boq_unit_rate + material.boq_labor_cost + material.boq_equipment_budget))
+                sub_total = budget_diff
+                material.update({'subtotal': sub_total,
+                                 'boq_equipment_budget_diff': budget_diff})
 
     @api.onchange('eco_mode')
     def onchange_eco_mode(self):
         rest_of_vals = self.eco_id.eco_material_ids - self
+        self.boq_material_id = False
+        self.product_id = False
+        self.boq_qty = 0.0
+        self.qty = 0.0
+        self.uom_id = False
+        self.boq_unit_rate = 0.0
+        self.boq_labor_cost = 0.0
+        self.labor_cost = 0.0
+        self.boq_equipment_budget = 0.0
+        self.equipment_budget = 0.0
+        self.boq_equipment_budget_diff = 0.0
+        self.subtotal = 0.0
         if self.eco_mode == 'update':
             boq_material_ids = []
             for record in rest_of_vals:
@@ -396,6 +450,13 @@ class SkitECOMaterial(models.Model):
                              'boq_labor_cost': self.boq_material_id.labor_cost,
                              'boq_equipment_budget': self.boq_material_id.equipment_cost})
 
+    @api.onchange('product_id')
+    def onchange_product_id(self):
+        if self.product_id:
+            self.update({
+                'uom_id': self.product_id.uom_id.id
+                })
+
     @api.model
     def create(self, vals):
         boq_material = self.env['boq.material'].sudo().search([
@@ -409,7 +470,7 @@ class SkitECOMaterial(models.Model):
             vals['boq_equipment_budget'] = boq_material.equipment_cost
         result = super(SkitECOMaterial, self).create(vals)
         for material in result:
-            val = ((material.boq_unit_rate+material.unit_rate) + (material.boq_labor_cost+material.labor_cost) + (material.boq_equipment_budget+material.equipment_budget))
+            val = ((material.boq_unit_rate) + (material.boq_labor_cost+material.labor_cost) + (material.boq_equipment_budget+material.equipment_budget))
             qty = (material.boq_qty + material.qty)
             subtotal = (val)*(qty)
             material.write({'subtotal': subtotal})
@@ -443,14 +504,29 @@ class SkitECOEquipment(models.Model):
                  'no_of_hrs')
     def _compute_eco_equipment_total(self):
         for equipment in self:
-            val = ((equipment.boq_unit_rate) + (equipment.boq_no_of_hrs + equipment.no_of_hrs))
-            qty = (equipment.boq_qty + equipment.qty)
-            subtotal = (val)*(qty)
-            equipment.update({'subtotal': subtotal})
+            if equipment.eco_mode == 'update':
+                budget_diff = (equipment.qty * (equipment.boq_unit_rate + equipment.no_of_hrs))
+                sub_total = (equipment.boq_qty * (equipment.boq_unit_rate + equipment.boq_no_of_hrs)) + budget_diff
+                equipment.update({'subtotal': sub_total,
+                                 'boq_equipment_budget': budget_diff})
+            else:
+                budget_diff = (equipment.boq_qty * (equipment.boq_unit_rate + equipment.boq_no_of_hrs))
+                sub_total = budget_diff
+                equipment.update({'subtotal': sub_total,
+                                 'boq_equipment_budget': budget_diff})
 
     @api.onchange('eco_mode')
     def onchange_eco_mode(self):
         rest_of_vals = self.eco_id.eco_equipment_ids - self
+        self.boq_equipment_id = False
+        self.name = ""
+        self.boq_qty = 0.0
+        self.qty = 0.0
+        self.uom_id = False
+        self.boq_no_of_hrs = 0.0
+        self.no_of_hrs = 0.0
+        self.boq_equipment_budget = 0.0
+        self.subtotal = 0.0
         if self.eco_mode == 'update':
             boq_equipment_ids = []
             for record in rest_of_vals:
@@ -507,14 +583,28 @@ class SkitECOSCService(models.Model):
     @api.depends('boq_qty', 'qty', 'boq_unit_rate')
     def _compute_eco_scservice_total(self):
         for service in self:
-            val = ((service.boq_unit_rate))
-            qty = (service.boq_qty + service.qty)
-            subtotal = (val)*(qty)
-            service.update({'subtotal': subtotal})
+            if service.eco_mode == 'update':
+                budget_diff = (service.qty * (service.boq_unit_rate))
+                sub_total = (service.boq_qty * (service.boq_unit_rate)) + budget_diff
+                service.update({'subtotal': sub_total,
+                                'boq_equipment_budget': budget_diff})
+            else:
+                budget_diff = (service.boq_qty * (service.boq_unit_rate))
+                sub_total = budget_diff
+                service.update({'subtotal': sub_total,
+                                'boq_equipment_budget': budget_diff})
 
     @api.onchange('eco_mode')
     def onchange_eco_mode(self):
         rest_of_vals = self.eco_id.eco_scservice_ids - self
+        self.boq_scservice_id = False
+        self.product_id = False
+        self.boq_qty = 0.0
+        self.qty = 0.0
+        self.uom_id = False
+        self.boq_unit_rate = 0.0
+        self.boq_equipment_budget = 0.0
+        self.subtotal = 0.0
         if self.eco_mode == 'update':
             boq_scservice_ids = []
             for record in rest_of_vals:
@@ -531,6 +621,13 @@ class SkitECOSCService(models.Model):
                              'uom_id': self.boq_scservice_id.uom_id.id,
                              'boq_qty': self.boq_scservice_id.qty,
                              'boq_unit_rate': self.boq_scservice_id.unit_rate})
+
+    @api.onchange('product_id')
+    def onchange_product_id(self):
+        if self.product_id:
+            self.update({
+                'uom_id': self.product_id.uom_id.id
+                })
 
     @api.model
     def create(self, vals):
@@ -558,8 +655,8 @@ class SkitECOLabor(models.Model):
     boq_labor_id = fields.Many2one('boq.labor', 'BOQ')
     job_id = fields.Many2one('hr.job', string='Name')
     description = fields.Char(string='Description')
-    boq_head_count = fields.Integer("Head Count")
-    head_count = fields.Integer("Head Count (-+)")
+    boq_head_count = fields.Integer("Headcount")
+    head_count = fields.Integer("Headcount (-+)")
     budget_head_count = fields.Integer("Budget/Head Count")
     uom_id = fields.Many2one('product.uom', string="UOM",
                              help="Unit of Measure")
@@ -577,9 +674,16 @@ class SkitECOLabor(models.Model):
     @api.depends('boq_head_count', 'head_count', 'budget_head_count')
     def _compute_labor_subtotal(self):
         for labor in self:
-            val = ((labor.boq_head_count) + (labor.head_count) + (labor.budget_head_count))
-            subtotal = val
-            labor.update({'subtotal': subtotal})
+            if labor.eco_mode == 'update':
+                budget_diff = (labor.head_count * (labor.budget_head_count))
+                sub_total = (labor.boq_head_count * (labor.budget_head_count)) + budget_diff
+                labor.update({'subtotal': sub_total,
+                              'boq_equipment_budget': budget_diff})
+            else:
+                budget_diff = (labor.boq_head_count * (labor.budget_head_count))
+                sub_total = budget_diff
+                labor.update({'subtotal': sub_total,
+                              'boq_equipment_budget': budget_diff})
 
     @api.depends('subtotal', 'dur_payment_term')
     def _compute_labor_total(self):
@@ -590,6 +694,17 @@ class SkitECOLabor(models.Model):
     @api.onchange('eco_mode')
     def onchange_eco_mode(self):
         rest_of_vals = self.eco_id.eco_labor_ids - self
+        self.boq_labor_id = False
+        self.job_id = False
+        self.description = ""
+        self.boq_head_count = 0
+        self.head_count = 0
+        self.budget_head_count = 0
+        self.uom_id = False
+        self.subtotal = 0.0
+        self.dur_payment_term = 0.0
+        self.boq_equipment_budget = 0.0
+        self.total = 0.0
         if self.eco_mode == 'update':
             boq_labor_ids = []
             for record in rest_of_vals:
@@ -658,14 +773,29 @@ class SkitECOOverhead(models.Model):
     @api.depends('boq_qty', 'qty', 'unit_rate')
     def _compute_overhead_subtotal(self):
         for overhead in self:
-            val = ((overhead.unit_rate))
-            qty = (overhead.boq_qty + overhead.qty)
-            subtotal = (val)*(qty)
-            overhead.update({'subtotal': subtotal})
+            if overhead.eco_mode == 'update':
+                budget_diff = (overhead.qty * (overhead.unit_rate))
+                sub_total = (overhead.boq_qty * (overhead.unit_rate)) + budget_diff
+                overhead.update({'subtotal': sub_total,
+                                 'boq_equipment_budget': budget_diff})
+            else:
+                budget_diff = (overhead.boq_qty * (overhead.unit_rate))
+                sub_total = budget_diff
+                overhead.update({'subtotal': sub_total,
+                                 'boq_equipment_budget': budget_diff})
 
     @api.onchange('eco_mode')
     def onchange_eco_mode(self):
         rest_of_vals = self.eco_id.eco_overhead_ids - self
+        self.boq_overhead_id = False
+        self.category_id = False
+        self.name = ""
+        self.boq_qty = 0.0
+        self.qty = 0.0
+        self.uom_id = False
+        self.unit_rate = False
+        self.boq_equipment_budget = 0.0
+        self.subtotal = 0.0
         if self.eco_mode == 'update':
             boq_overhead_ids = []
             for record in rest_of_vals:

@@ -104,11 +104,18 @@ class ProjectWasteProcess(models.Model):
         if self.material_waste == 'cutted':
             cutted = True
         waste_management.create({'product_id': self.product_id.id,
+                                 'new_product_id': self.new_product_id.id,
                                  'qty': self.quantity,
                                  'task_id': self.material_id.task_id.id,
                                  'date_recorded': fields.Date.today(),
                                  'uom_id': uom,
-                                 'is_cutted': cutted})
+                                 'is_cutted': cutted,
+                                 'material_waste': self.material_waste,
+                                 'waste_location_id': self.waste_location_id.id,
+                                 'description': self.description,
+                                 'cutted_portion': self.cutted_portion,
+                                 'cutted_qty': self.cutted_qty,
+                                 'wastage_percent': self.waste_percent})
         if self.material_waste == 'whole':
             stock_picking = self.env['stock.picking']
             stock_move = self.env['stock.move']
@@ -117,8 +124,8 @@ class ProjectWasteProcess(models.Model):
                                             'location_dest_id': self.waste_location_id.id,
                                             })
             stock_move.create({
-                    'name': _('New Move:') + self.material_id.product_id.display_name,
-                    'product_id': self.material_id.product_id.id,
+                    'name': _('New Move:') + self.new_product_id.display_name,
+                    'product_id': self.new_product_id.id,
                     'product_uom_qty': self.quantity,
                     'product_uom': self.uom_id.id,
                     'picking_id': picking.id,
@@ -146,7 +153,7 @@ class ProjectScrapMove(models.Model):
                                  readonly=True)
     scrap_location_id = fields.Many2one('stock.location',
                                         string="Scrap Location", required=True,
-                                        domain="[('usage', '=', 'internal'),('scrap_location', '=', True)]")
+                                        domain="[('usage', '=', 'inventory'),('scrap_location', '=', True)]")
     description = fields.Text(string='Description',
                               required=True)
     material_id = fields.Many2one('project.material.consumption',
@@ -166,6 +173,8 @@ class ProjectScrapMove(models.Model):
                            'date_recorded': fields.Date.today(),
                            'scrap_reason': self.description,
                            'task_id': self.material_id.task_id.id,
+                           'scrap_location_id': self.scrap_location_id.id,
+                           'scrap_percent': self.scrap_percent,
                            })
         qty = self.material_id.available_stock - self.quantity
         self.material_id.write({'available_stock': qty
