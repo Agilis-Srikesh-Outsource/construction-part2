@@ -77,6 +77,8 @@ class SkitMaterialReq(models.Model):
         if self.name == 'New':
             val = self.env['ir.sequence'].next_by_code('material.requisition.bom')
             self.write({'name': val})
+        if not self.task_id.stock_location_id or not self.task_id.picking_type_id:
+            raise UserError(_('Select Task Inventory Location and Picking Operation in Material status tab.'))
 
     @api.multi
     def mr_action_verify(self):

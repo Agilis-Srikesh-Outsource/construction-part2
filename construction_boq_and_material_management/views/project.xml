@@ -13,6 +13,10 @@
 	        <field name="model">project.project</field>
 	        <field name="inherit_id" ref="project.view_project_kanban"/>
 	        <field name="arch" type="xml">
+	        	 <field name="alias_domain" position="after">
+	                <field name="activity_ids"/>
+                    <field name="activity_state"/>
+	            </field>
 		        <xpath expr="//t[@t-name='kanban-box']" position="after">
 		        	<t t-name="ProjectBodyBarGraph">
 		                 <field name="kanban_dashboard_graph" widget="kanban_graph"/>
@@ -21,7 +25,7 @@
 		                 <field name="kanban_dashboard_line_graph" widget="kanban_line_graph"/>
 		            </t>
 		        </xpath>
-	            <xpath expr="//div[contains(@class, 'o_project_kanban_boxes')]" position="before">
+	            <xpath expr="//div[contains(@class, 'o_project_kanban_main')]" position="inside">
 	                <div class="outerDiv">
 						<div class="leftDiv">
 							<t t-call="ProjectBodyBarGraph" />
@@ -30,6 +34,13 @@
 							<t t-call="ProjectBodyLineGraph" />
 						</div>		
 					</div>
+	           </xpath> 
+	           <xpath expr="//div[contains(@class, 'o_project_kanban_boxes')]" position="before">
+	           		<div class="o_kanban_record_bottom">
+                    	<div class="oe_kanban_bottom_left">
+                       		<field name="activity_ids" widget="kanban_activity"/>
+                        </div>
+                    </div>
 	           </xpath>
 	        </field>
 	    </record>
