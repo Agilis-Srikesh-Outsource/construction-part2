@@ -505,12 +505,12 @@ class SkitECOEquipment(models.Model):
     def _compute_eco_equipment_total(self):
         for equipment in self:
             if equipment.eco_mode == 'update':
-                budget_diff = (equipment.qty * (equipment.boq_unit_rate + equipment.no_of_hrs))
-                sub_total = (equipment.boq_qty * (equipment.boq_unit_rate + equipment.boq_no_of_hrs)) + budget_diff
+                budget_diff = (equipment.qty * (equipment.boq_unit_rate * equipment.no_of_hrs))
+                sub_total = (equipment.boq_qty * (equipment.boq_unit_rate * equipment.boq_no_of_hrs)) + budget_diff
                 equipment.update({'subtotal': sub_total,
                                  'boq_equipment_budget': budget_diff})
             else:
-                budget_diff = (equipment.boq_qty * (equipment.boq_unit_rate + equipment.boq_no_of_hrs))
+                budget_diff = (equipment.boq_qty * (equipment.boq_unit_rate * equipment.boq_no_of_hrs))
                 sub_total = budget_diff
                 equipment.update({'subtotal': sub_total,
                                  'boq_equipment_budget': budget_diff})
