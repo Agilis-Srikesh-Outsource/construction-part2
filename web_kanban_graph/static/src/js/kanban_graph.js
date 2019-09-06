@@ -113,7 +113,7 @@ var KanbanLineGraphWidget = AbstractField.extend({
         nv.addGraph(function () {       	
         	var line_data = [];
             var data_dict = {};
-            var tick = 0;
+            var tick = -1;
             var tickLabels = [];
             var serie, tickLabel;
             var identity = function (p) {return p;};

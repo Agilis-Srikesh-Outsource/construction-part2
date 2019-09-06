@@ -41,8 +41,11 @@ class Project(models.Model):
     def get_line_graph_datas(self):
         datas = []
         for project in self.projection_accomplishment_ids:
-            pdate = datetime.strptime(project.date, '%Y-%m-%d')
-            project_date = pdate.strftime("%Y-%m-%d")
+            if project.date:
+                pdate = datetime.strptime(project.date, '%Y-%m-%d')
+                project_date = pdate.strftime("%Y-%m-%d")
+            else:
+                project_date = ""
             datas.append({"value": ((project.projected) / 100), "labels": [project_date,"Projected Accomplishment"]})
             datas.append({"value": ((project.actual) / 100), "labels": [project_date,"Actual Accomplishment"]})
 
