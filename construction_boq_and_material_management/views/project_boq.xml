@@ -38,7 +38,7 @@
 				       			type="object" attrs="{'invisible': [('state', 'not in', ['draft'])]}"/>
 				        <button name ="boq_action_verify" string="Verify" class="oe_highlight" states="confirmed" type="object"/>
 				        <button name="boq_action_approve" string="Approve" class="oe_highlight" states="verified" type="object"/>
-				        <button name ="boq_action_cancel" states="draft,confirmed,verified,approved" string="Cancel"  type="object"/>
+				        <button name ="boq_action_cancel" states="draft,confirmed,verified" string="Cancel"  type="object"/>
 				        <button name="boq_action_draft" states="cancelled" type="object" string="Set to BOQ"/>
 				        <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,verified,approved" 
 				           	statusbar_colors="{'KEY_IS_STATE':'VALUE_IS_COLOR'}"/>
@@ -236,6 +236,7 @@
     		
     		<!-- BOQ Overhead Category Menu Item-->
     	<menuitem id="menu_projects_boq_overhead_categ" action="open_view_boq_overhead_categ" 
-    		name="BOQ Overhead Category" parent="project.menu_projects" sequence="6"/>
+    		name="BOQ Overhead Category" parent="project.menu_project_config" sequence="3"/>
+    	
 	</data>
 </odoo>
