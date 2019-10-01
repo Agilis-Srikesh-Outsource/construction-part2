@@ -78,8 +78,9 @@ class ProjectReportXls(models.AbstractModel):
         
         worksheet.set_column(0, 0, 32)
         worksheet.set_column(1, 3, 15)
-        worksheet.set_column(4, 4, 30)
-        worksheet.set_column(5, 8, 15)
+        worksheet.set_column(4, 4, 32)
+        worksheet.set_column(5, 5, 25)
+        worksheet.set_column(6, 9, 15)
         
         worksheet.write('A2', 'Run By',italic) 
         worksheet.write('B2', runby, bold) 
@@ -96,7 +97,7 @@ class ProjectReportXls(models.AbstractModel):
         worksheet.write('E2', 'Run Date',italic) 
         worksheet.write('F2', rundate, bold)
         
-        worksheet.merge_range('A5:H5', 'Project Budget', format1)
+        worksheet.merge_range('A5:I5', 'Project Budget', format1)
         
         headings = ['', 'Budget', 'Actual Expense']  
         worksheet.write_row('A7', headings, format2)
@@ -149,12 +150,12 @@ class ProjectReportXls(models.AbstractModel):
         chart1.set_style(2)
         
         chart1.set_legend({'position': 'top'})
-        chart1.set_size({'width':600,'height' : 300}) 
+        chart1.set_size({'width':760,'height' : 300}) 
 
         worksheet.insert_chart('D6:G6', chart1, {'x_offset': 20, 'y_offset': 5})
         
-        worksheet.merge_range('J5:Q5', 'Project Status', format1)  
-        worksheet.set_column(9, 9, 30)
+        worksheet.merge_range('K5:R5', 'Project Status', format1)  
+        worksheet.set_column(10, 10, 30)
         #worksheet.set_column(10, 16, 13)
         
         # Fetching data for Projected Accomplishment
@@ -184,7 +185,7 @@ class ProjectReportXls(models.AbstractModel):
             else:
                 actual_accomplish_temp[date_format] =  rec.actual
 
-        worksheet.set_column(10, 10 + len(headings), 13)
+        worksheet.set_column(11, 11 + len(headings), 13)
         projected_accomplish = []
         actual_accomplish = []
         for hd in headings:               
@@ -199,27 +200,27 @@ class ProjectReportXls(models.AbstractModel):
             
         #  Projected Accomplishment tabular 
         if (len(actual_accomplish) >0 or len(projected_accomplish) > 0):
-            worksheet.write('J22', "Accomplishment", format6)
-            worksheet.write('J23', "Projected Accomplishment", format8)
-            worksheet.write('J24', "Actual Accomplishment", format8)
-            worksheet.write_row('K22', headings, format7)
-            worksheet.write_row('K23', projected_accomplish, format5)
-            worksheet.write_row('K24', actual_accomplish, format5)  
+            worksheet.write('K22', "Accomplishment", format6)
+            worksheet.write('K23', "Projected Accomplishment", format8)
+            worksheet.write('K24', "Actual Accomplishment", format8)
+            worksheet.write_row('L22', headings, format7)
+            worksheet.write_row('L23', projected_accomplish, format5)
+            worksheet.write_row('L24', actual_accomplish, format5)  
         
         #  Line graph for Projected Accomplishment      
                 
         chart2 = workbook.add_chart({'type': 'line'})
                 
         chart2.add_series({  
-            'name':       '=Sheet1!$J$23',  
-            'categories': ['Sheet1', 21, 10, 21, 10+len(headings)],
-            'values':     ['Sheet1',22, 10, 22, 10+len(headings)],
+            'name':       '=Sheet1!$K$23',  
+            'categories': ['Sheet1', 21, 11, 21, 11+len(headings)],
+            'values':     ['Sheet1',22, 11, 22, 11+len(headings)],
         })  
            
         chart2.add_series({  
-            'name':       '=Sheet1!$J$24',  
-            'categories': ['Sheet1', 21, 10, 21, 10+len(headings)], 
-            'values':     ['Sheet1',23, 10, 23, 10+len(headings)],
+            'name':       '=Sheet1!$K$24',  
+            'categories': ['Sheet1', 21, 11, 21, 11+len(headings)], 
+            'values':     ['Sheet1',23, 11, 23, 11+len(headings)],
         })
         
         chart2.set_title ({'name': 'Projected Accomplishment and Actual Accomplishment','name_font': {'bold':0,'size': 10, 'name': 'arial', 'color':'#808080'}})
@@ -229,19 +230,20 @@ class ProjectReportXls(models.AbstractModel):
         chart2.set_legend({'position': 'top'})
         chart2.set_size({'width':880,'height' : 300}) 
 
-        worksheet.insert_chart('J6:Q6', chart2, {'y_offset': 5})
+        worksheet.insert_chart('K6:R6', chart2, {'y_offset': 5})
         
         # Phase-wise Project Budget and Expense Tabular data
         
         worksheet.merge_range('A22:A23', "Phase", format9)
         worksheet.merge_range('B22:B23', "Task", format9)
         worksheet.merge_range('C22:C23', "Type", format9)
-        worksheet.merge_range('D22:H22', "Categories", format10)
+        worksheet.merge_range('D22:I22', "Categories", format10)
         worksheet.write('D23', "1. Material", bold)
         worksheet.write('E23', "2. Subcontract (Ousource Service)", bold)
-        worksheet.write('F23', "3. Equipment", bold)
-        worksheet.write('G23', "4. Overheads", bold)
-        worksheet.write('H23', "Total", bold)
+        worksheet.write('F23', "3. Human Resource/Labor", bold)
+        worksheet.write('G23', "4. Equipment", bold)
+        worksheet.write('H23', "5. Overheads", bold)
+        worksheet.write('I23', "Total", bold)
         
         
         tasks = self.env['project.task'].search([('project_id', '=', wizard_record.project_id.id)],order="phase_id,create_date")
@@ -259,9 +261,10 @@ class ProjectReportXls(models.AbstractModel):
             worksheet.write('C'+str(row_number), "Budget", format2)
             worksheet.write('D'+str(row_number), task.material_budget, format3)
             worksheet.write('E'+str(row_number), task.service_budget, format3)
-            worksheet.write('F'+str(row_number), task.equipment_budget, format3)
-            worksheet.write('G'+str(row_number), task.overhead_budget, format3)
-            worksheet.write('H'+str(row_number), task.total_budget, format3)
+            worksheet.write('F'+str(row_number), task.labor_budget, format3)
+            worksheet.write('G'+str(row_number), task.equipment_budget, format3)
+            worksheet.write('H'+str(row_number), task.overhead_budget, format3)
+            worksheet.write('I'+str(row_number), task.total_budget, format3)
             
             worksheet.merge_range('B'+str(row_number)+':B'+str(row_number+1), task.name, format11)
             
@@ -269,10 +272,11 @@ class ProjectReportXls(models.AbstractModel):
              
             worksheet.write('C'+str(row_number), "Actual Expense", format2)            
             worksheet.write('D'+str(row_number), task.material_expense, format3)            
-            worksheet.write('E'+str(row_number), task.service_expense, format3)           
-            worksheet.write('F'+str(row_number), task.equipment_expense, format3)            
-            worksheet.write('G'+str(row_number), task.overhead_expense, format3)
-            worksheet.write('H'+str(row_number), task.total_expense, format3)
+            worksheet.write('E'+str(row_number), task.service_expense, format3)   
+            worksheet.write('F'+str(row_number), task.labor_expense, format3)        
+            worksheet.write('G'+str(row_number), task.equipment_expense, format3)            
+            worksheet.write('H'+str(row_number), task.overhead_expense, format3)
+            worksheet.write('I'+str(row_number), task.total_expense, format3)
             
             cnt += 1
             row_number += 1
@@ -319,8 +323,8 @@ class ProjectReportXls(models.AbstractModel):
                 actual_accomplish = []
                 phase = self.env['project.phase'].search([('id', '=', phase_id)])
                 phase_colors[phase_id] =  colors[phase_cnt] if phase_cnt < 2 else '#%02X%02X%02X' % (rand(), rand(), rand())
-                worksheet.write('J'+str(start_number), phase.name,format7)
-                worksheet.write('K'+str(start_number), phase.phase_weight/100,format14)
+                worksheet.write('K'+str(start_number), phase.name,format7)
+                worksheet.write('L'+str(start_number), phase.phase_weight/100,format14)
                 for hd in visual_headings:
                     if values.get(hd):
                         actual_accomplish.append(values.get(hd)/100)
@@ -329,17 +333,17 @@ class ProjectReportXls(models.AbstractModel):
                 
                 format_phase = workbook.add_format({'font_size': 10, 'font_name': 'arial','num_format': '0.00%','bg_color':phase_colors[phase_id]})
                 format_phase.set_align('right')
-                worksheet.write_row('L'+str(start_number), actual_accomplish,format_phase)
+                worksheet.write_row('M'+str(start_number), actual_accomplish,format_phase)
                 start_number += 1
                 phase_cnt += 1
             
             if len(visual_headings) == 1:
-                worksheet.write('L26', "Accomplishment",format12)
+                worksheet.write('M26', "Accomplishment",format12)
             else:
-                worksheet.merge_range(25,11,25,11+ len(visual_headings)-1, "Accomplishment",format12)
-            worksheet.merge_range('J26:J27', "Phase",format15)
-            worksheet.merge_range('K26:K27', "Phase Weight",format15)
-            worksheet.write_row('L27', visual_headings,bold)
+                worksheet.merge_range(25,12,25,12+ len(visual_headings)-1, "Accomplishment",format12)
+            worksheet.merge_range('K26:K27', "Phase",format15)
+            worksheet.merge_range('L26:L27', "Phase Weight",format15)
+            worksheet.write_row('M27', visual_headings,bold)
         
         
         # Task-wise Accomplishment
@@ -347,20 +351,20 @@ class ProjectReportXls(models.AbstractModel):
             start_number += 1
             
             if len(visual_headings) == 1:
-                worksheet.write('L'+str(start_number), "Accomplishment",format12)
+                worksheet.write('M'+str(start_number), "Accomplishment",format12)
             else:
-                worksheet.merge_range(start_number-1,11,start_number-1,11+ len(visual_headings)-1, "Accomplishment",format12)
-            worksheet.merge_range('J'+str(start_number)+':J'+str(start_number+1), "Task",format15)
-            worksheet.merge_range('K'+str(start_number)+':K'+str(start_number+1), "Task Weight",format15)
-            worksheet.write_row('L'+str(start_number+1), visual_headings,bold)
+                worksheet.merge_range(start_number-1,12,start_number-1,12+ len(visual_headings)-1, "Accomplishment",format12)
+            worksheet.merge_range('K'+str(start_number)+':K'+str(start_number+1), "Task",format15)
+            worksheet.merge_range('L'+str(start_number)+':L'+str(start_number+1), "Task Weight",format15)
+            worksheet.write_row('M'+str(start_number+1), visual_headings,bold)
             
             start_number += 2
                         
             for task_id, values in task_accomplishment.items(): 
                 actual_accomplish = []
                 tasks = self.env['project.task'].search([('id', '=', task_id)])
-                worksheet.write('J'+str(start_number), tasks.name,format13)
-                worksheet.write('K'+str(start_number), tasks.task_weight/100,format14)
+                worksheet.write('K'+str(start_number), tasks.name,format13)
+                worksheet.write('L'+str(start_number), tasks.task_weight/100,format14)
                 for hd in visual_headings:
                     if values.get(hd):
                         actual_accomplish.append(values.get(hd)/100)
@@ -370,7 +374,7 @@ class ProjectReportXls(models.AbstractModel):
                 format_phase = workbook.add_format({'font_size': 10, 'font_name': 'arial','num_format': '0.00%','bg_color':phase_col})
                 format_phase.set_align('right')
                 
-                worksheet.write_row('L'+str(start_number), actual_accomplish,format_phase)
+                worksheet.write_row('M'+str(start_number), actual_accomplish,format_phase)
                 start_number += 1
         
 
